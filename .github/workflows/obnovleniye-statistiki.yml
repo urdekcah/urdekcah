@@ -1,14 +1,14 @@
-name: WAKATIME STAT UPDATE
+name: ОБНОВЛЕНИЕ СТАТИСТИКИ WAKATIME
 
 on:
   workflow_dispatch:
   schedule:
-    # Runs every hour
+    # Этот workflow будет запускаться КАЖДЫЙ ЧАС
     - cron: "0 */1 * * *"
 
 jobs:
   update-readme:
-    name: Update this repo's README
+    name: urdekcah
     runs-on: ubuntu-latest
     steps:
       - uses: athul/waka-readme@master

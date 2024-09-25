@@ -2,9 +2,12 @@
 <!--START_SECTION:waka-->
 
 ```txt
-Total Time: 0 secs
+Total Time: 24 mins
 
-No activity tracked
+Go           11 mins         ███████████░░░░░░░░░░░░░░   44.48 %
+Rust         10 mins         ███████████░░░░░░░░░░░░░░   44.07 %
+TOML         2 mins          ██▓░░░░░░░░░░░░░░░░░░░░░░   11.32 %
+Git Config   0 secs          ░░░░░░░░░░░░░░░░░░░░░░░░░   00.13 %
 ```
 
 <!--END_SECTION:waka-->

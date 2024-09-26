@@ -4,6 +4,10 @@
   <a href="https://urdekcah.blog">Blog</a>
 </p>
 
+<p align="center">
+  Hi there! 👋 I'm a curious student residing in South Korea 🇰🇷. I love programming in Rust, C, and C++, and when it comes to spoken languages, Russian is my favorite(I have a deep fascination for Russia 🇷🇺, However, I approach current events with a neutral perspective, aiming to understand all sides without taking a political stance.). I am passionate about creating things, constantly exploring new ways to bring ideas to life.
+</p>
+
 <!--START_SECTION:waka-->
 
 ```txt

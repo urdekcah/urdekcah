@@ -1,4 +1,9 @@
-### 👋 Hi there! Всем привет!
+<h2 align="center">👋 Hi there! Всем привет!</h2>
+<p align="center">
+  <a href="https://urdekcah.ru">Website</a> •
+  <a href="https://urdekcah.blog">Blog</a>
+</p>
+
 <!--START_SECTION:waka-->
 
 ```txt

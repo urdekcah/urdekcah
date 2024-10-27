@@ -11,13 +11,13 @@
 <!--START_SECTION:waka-->
 
 ```txt
-Total Time: 115 hrs 2 mins
+Total Time: 115 hrs 38 mins
 
-C             103 hrs 47 mins █████████████████████▓░░░   87.22 %
-Other         3 hrs 57 mins   ▓░░░░░░░░░░░░░░░░░░░░░░░░   03.32 %
-Makefile      3 hrs 57 mins   ▓░░░░░░░░░░░░░░░░░░░░░░░░   03.32 %
-Go            1 hr 47 mins    ▒░░░░░░░░░░░░░░░░░░░░░░░░   01.51 %
-Python        1 hr 28 mins    ▒░░░░░░░░░░░░░░░░░░░░░░░░   01.24 %
+C             103 hrs 47 mins █████████████████████▓░░░   86.78 %
+Other         3 hrs 57 mins   ▓░░░░░░░░░░░░░░░░░░░░░░░░   03.30 %
+Makefile      3 hrs 57 mins   ▓░░░░░░░░░░░░░░░░░░░░░░░░   03.30 %
+Go            1 hr 47 mins    ▒░░░░░░░░░░░░░░░░░░░░░░░░   01.50 %
+Python        1 hr 28 mins    ▒░░░░░░░░░░░░░░░░░░░░░░░░   01.23 %
 ```
 
 <!--END_SECTION:waka-->

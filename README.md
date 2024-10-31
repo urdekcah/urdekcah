@@ -11,13 +11,13 @@
 <!--START_SECTION:waka-->
 
 ```txt
-Total Time: 120 hrs 19 mins
+Total Time: 121 hrs 35 mins
 
-C             103 hrs 51 mins █████████████████████░░░░   83.43 %
-Other         4 hrs 8 mins    ▓░░░░░░░░░░░░░░░░░░░░░░░░   03.33 %
-Makefile      3 hrs 57 mins   ▓░░░░░░░░░░░░░░░░░░░░░░░░   03.17 %
-HTML          3 hrs 8 mins    ▓░░░░░░░░░░░░░░░░░░░░░░░░   02.52 %
-Rust          1 hr 59 mins    ▒░░░░░░░░░░░░░░░░░░░░░░░░   01.60 %
+C             104 hrs 38 mins ████████████████████▓░░░░   83.22 %
+Other         4 hrs 8 mins    ▓░░░░░░░░░░░░░░░░░░░░░░░░   03.30 %
+Makefile      4 hrs 5 mins    ▓░░░░░░░░░░░░░░░░░░░░░░░░   03.25 %
+HTML          3 hrs 18 mins   ▓░░░░░░░░░░░░░░░░░░░░░░░░   02.63 %
+Rust          2 hrs 8 mins    ▒░░░░░░░░░░░░░░░░░░░░░░░░   01.70 %
 ```
 
 <!--END_SECTION:waka-->

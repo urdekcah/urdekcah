@@ -19,11 +19,9 @@ async fn main() -> Result<()> {
     env::var("OPENWEATHER_API_KEY").context("Missing OPENWEATHER_API_KEY environment variable")?;
 
   let config = WeatherConfig::new(api_key, "README.md", std::time::Duration::from_secs(300))?;
-
   let service = WeatherService::new(config);
-  let city = env::args().nth(1).unwrap_or_else(|| "moscow".to_string());
 
-  if let Err(e) = service.run(&city).await {
+  if let Err(e) = service.run().await {
     error!("Failed to update weather: {:?}", e);
     std::process::exit(1);
   }

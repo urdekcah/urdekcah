@@ -6,6 +6,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum WeatherError {
+  #[error("Weather section header must include city name (<!--START_SECTION:weather:city-->)")]
+  MissingCityInSection,
   #[error("Weather section not found in README - skipping weather update")]
   WeatherSectionNotFound,
   #[error("API request failed: {0}")]

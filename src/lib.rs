@@ -13,7 +13,6 @@ pub use error::WeatherError;
 pub use models::weather::WeatherInfo;
 pub use service::weather::WeatherService;
 
-pub(crate) const WEATHER_START: &str = "<!--START_SECTION:weather-->";
 pub(crate) const WEATHER_END: &str = "<!--END_SECTION:weather-->";
 pub(crate) const API_BASE_URL: &str = "https://api.openweathermap.org/data/2.5/weather";
 pub(crate) const REQUEST_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);

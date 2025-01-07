@@ -14,7 +14,7 @@ use crate::{
   config::WeatherConfig,
   error::WeatherError,
   models::{api::WeatherResponse, weather::WeatherInfo},
-  API_BASE_URL, REQUEST_TIMEOUT, WEATHER_END, WEATHER_START,
+  API_BASE_URL, REQUEST_TIMEOUT, WEATHER_END,
 };
 
 pub struct WeatherService {
@@ -34,6 +34,29 @@ impl WeatherService {
         .expect("Failed to create HTTP client"),
       cache: tokio::sync::RwLock::new(None),
     }
+  }
+
+  #[instrument(skip(self))]
+  async fn get_city_from_section(&self) -> Result<String> {
+    let content =
+      fs::read_to_string(&self.config.readme_path).context("Failed to read README file")?;
+
+    let start_marker = content
+      .find("<!--START_SECTION:weather:")
+      .ok_or(WeatherError::WeatherSectionNotFound)?;
+
+    let city_start = start_marker + "<!--START_SECTION:weather:".len();
+    let city_end = content[city_start..]
+      .find("-->")
+      .ok_or(WeatherError::MissingCityInSection)?;
+
+    let city = content[city_start..city_start + city_end].trim();
+
+    if city.is_empty() {
+      return Err(WeatherError::MissingCityInSection.into());
+    }
+
+    Ok(city.to_string())
   }
 
   #[instrument(skip(self))]
@@ -96,32 +119,32 @@ impl WeatherService {
   }
 
   #[instrument(skip(self))]
-  async fn has_weather_section(&self) -> Result<bool> {
-    let content =
-      fs::read_to_string(&self.config.readme_path).context("Failed to read README file")?;
-
-    Ok(content.contains(WEATHER_START) && content.contains(WEATHER_END))
-  }
-
-  #[instrument(skip(self))]
   async fn update_readme(&self, weather: &WeatherInfo) -> Result<()> {
     let content =
       fs::read_to_string(&self.config.readme_path).context("Failed to read README file")?;
 
-    let start_idx = content
-      .find(WEATHER_START)
+    let section_start = content
+      .find("<!--START_SECTION:weather:")
       .ok_or(WeatherError::WeatherSectionNotFound)?;
+
     let end_idx = content
       .find(WEATHER_END)
       .ok_or(WeatherError::WeatherSectionNotFound)?;
 
+    let start_marker = &content[section_start
+      ..content[section_start..]
+        .find("-->")
+        .map(|pos| section_start + pos + 3)
+        .ok_or(WeatherError::WeatherSectionNotFound)?];
+
     let weather_text = weather.format_readme();
 
     let new_content = format!(
-      "{}{}{}",
-      &content[..start_idx],
+      "{}{}\n{}\n{}",
+      &content[..section_start],
+      start_marker,
       weather_text,
-      &content[end_idx + WEATHER_END.len()..]
+      &content[end_idx + 1 + WEATHER_END.len()..]
     );
 
     let temp_path = self.config.readme_path.with_extension("tmp");
@@ -133,14 +156,13 @@ impl WeatherService {
   }
 
   #[instrument(skip(self))]
-  pub async fn run(&self, city: &str) -> Result<()> {
-    if !self.has_weather_section().await? {
-      info!("No weather section found in README - skipping update");
-      return Ok(());
-    }
+  pub async fn run(&self) -> Result<()> {
+    info!("Starting weather update");
 
-    info!("Starting weather update for city: {}", city);
-    let weather = self.fetch_weather(city).await?;
+    let city = self.get_city_from_section().await?;
+    info!("Found city in section header: {}", city);
+
+    let weather = self.fetch_weather(&city).await?;
     self.update_readme(&weather).await?;
     Ok(())
   }

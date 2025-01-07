@@ -3,7 +3,7 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use super::api::WeatherResponse;
-use crate::{WEATHER_END, WEATHER_START};
+use crate::WEATHER_END;
 use anyhow::{Context, Result};
 use chrono::{DateTime, FixedOffset, TimeZone, Utc};
 use serde::Serialize;
@@ -56,10 +56,9 @@ impl WeatherInfo {
   pub(crate) fn format_readme(&self) -> String {
     let today = self.sunrise.format("%B %d, %Y");
     format!(
-      "{}\nCurrently in **{}** ({}), the weather is: **{:.1}°C** (feels like **{:.1}°C**), ***{}***<br/>\n\
+      "Currently in **{}** ({}), the weather is: **{:.1}°C** (feels like **{:.1}°C**), ***{}***<br/>\n\
       On *{}*, the *sun rises* at 🌅**{}** and *sets* at 🌇**{}**.\n\
       {}",
-      WEATHER_START,
       self.location,
       self.country,
       self.temp,

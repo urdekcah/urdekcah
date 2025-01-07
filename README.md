@@ -22,6 +22,11 @@ JavaScript                 13 hrs 41 mins  █▒░░░░░░░░░░�
 
 <!--END_SECTION:waka-->
 
+<h3>Добро пожаловать в <img src="https://cdn-icons-png.flaticon.com/512/197/197408.png" width="13"/> Москву!</h3>
+
+<!--START_SECTION:weather:moscow-->
+<!--END_SECTION:weather-->
+
 <!--
 **urdekcah/urdekcah** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 

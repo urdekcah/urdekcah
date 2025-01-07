@@ -12,12 +12,12 @@
 <!--START_SECTION:waka-->
 
 ```txt
-Total Time: 238 hrs 37 mins
+Total Time: 245 hrs 3 mins
 
-C                          130 hrs 42 mins █████████████▒░░░░░░░░░░░   53.28 %
-Rust                       22 hrs 8 mins   ██▒░░░░░░░░░░░░░░░░░░░░░░   09.03 %
-C++                        15 hrs 15 mins  █▓░░░░░░░░░░░░░░░░░░░░░░░   06.22 %
-JavaScript                 13 hrs 41 mins  █▒░░░░░░░░░░░░░░░░░░░░░░░   05.58 %
+C                          130 hrs 42 mins █████████████░░░░░░░░░░░░   51.88 %
+Rust                       25 hrs 35 mins  ██▓░░░░░░░░░░░░░░░░░░░░░░   10.16 %
+C++                        15 hrs 15 mins  █▓░░░░░░░░░░░░░░░░░░░░░░░   06.06 %
+JavaScript                 13 hrs 44 mins  █▒░░░░░░░░░░░░░░░░░░░░░░░   05.45 %
 ```
 
 <!--END_SECTION:waka-->

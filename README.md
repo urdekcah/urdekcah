@@ -8,7 +8,7 @@
   Hi there! 👋 I'm a curious student residing in South Korea 🇰🇷. I love programming in Rust, C, and C++, and when it comes to spoken languages, Russian is my favorite(I have a deep fascination for Russia 🇷🇺, However, I approach current events with a neutral perspective, aiming to understand all sides without taking a political stance.). I am passionate about creating things, constantly exploring new ways to bring ideas to life.
 </p>
 
-## SINCE SEP 25 2024
+### SINCE SEP 25 2024
 <!--START_SECTION:waka-->
 
 ```txt
@@ -21,6 +21,11 @@ JavaScript                 13 hrs 41 mins  █▒░░░░░░░░░░�
 ```
 
 <!--END_SECTION:waka-->
+
+<h3>Добро пожаловать в <img src="https://cdn-icons-png.flaticon.com/512/197/197408.png" width="13"/> Москву!</h3>
+
+<!--START_SECTION:weather:moscow-->
+<!--END_SECTION:weather-->
 
 <!--
 **urdekcah/urdekcah** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.

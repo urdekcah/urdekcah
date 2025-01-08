@@ -1,11 +1,17 @@
-[package]
-name = "urdekcah"
+[workspace]
+members = [
+  "urdekcah",
+  "weather"
+]
+resolver = "2"
+
+[workspace.package]
 authors = ["urdekcah <ya@urdekcah.ru>"]
 version = "0.1.0"
 edition = "2021"
 license = "AGPL-3.0"
 
-[dependencies]
+[workspace.dependencies]
 tokio = { version = "1.0", features = ["full"] }
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
@@ -16,5 +22,5 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 url = "2.5.4"
 
-[dev-dependencies]
-mockall = "0.13.1"
+# urdekcah
+weather = { path = "./weather" }

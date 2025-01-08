@@ -5,7 +5,7 @@
 use anyhow::{Context, Result};
 use std::env;
 use tracing::error;
-use urdekcah::{WeatherConfig, WeatherService};
+use weather::{WeatherConfig, WeatherService};
 
 #[tokio::main]
 async fn main() -> Result<()> {

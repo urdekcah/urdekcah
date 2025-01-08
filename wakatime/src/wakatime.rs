@@ -25,7 +25,6 @@ pub struct WakaTimeClient {
   base_url: String,
 }
 
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct WakaStats {
   pub start: String,

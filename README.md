@@ -10,7 +10,6 @@
 
 ### SINCE SEP 25 2024
 <!--START_SECTION:waka-->
-
 ```txt
 Total Time: 245 hrs 3 mins
 
@@ -19,12 +18,11 @@ Rust                       25 hrs 35 mins  ██▓░░░░░░░░░�
 C++                        15 hrs 15 mins  █▓░░░░░░░░░░░░░░░░░░░░░░░   06.06 %
 JavaScript                 13 hrs 44 mins  █▒░░░░░░░░░░░░░░░░░░░░░░░   05.45 %
 ```
-
 <!--END_SECTION:waka-->
 
 <h3>Добро пожаловать в <img src="https://cdn-icons-png.flaticon.com/512/197/197408.png" width="13"/> Москву!</h3>
 
 <!--START_SECTION:weather:moscow-->
-Currently in **Moscow** (RU), the weather is: **4.1°C** (feels like **-0.5°C**), ***moderate rain***<br/>
+Currently in **Moscow** (RU), the weather is: **4.2°C** (feels like **-0.3°C**), ***light rain***<br/>
 On *January 08, 2025*, the *sun rises* at 🌅**08:55** and *sets* at 🌇**16:16**.
 <!--END_SECTION:weather-->

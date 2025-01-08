@@ -1,20 +1,37 @@
-[package]
-name = "urdekcah"
+[workspace]
+members = [
+  "urdekcah",
+  "config",
+  "error",
+  "wakatime",
+  "weather"
+]
+resolver = "2"
+
+[workspace.package]
 authors = ["urdekcah <ya@urdekcah.ru>"]
 version = "0.1.0"
 edition = "2021"
 license = "AGPL-3.0"
 
-[dependencies]
+[workspace.dependencies]
 tokio = { version = "1.0", features = ["full"] }
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+async-trait = "0.1.85"
+toml = "0.8.19"
+regex = "1.11.1"
 chrono = { version = "0.4.39", features = ["serde"] }
 anyhow = "1.0"
 thiserror = "2"
 tracing = "0.1"
 tracing-subscriber = "0.3"
+base64 = "0.22.1"
 url = "2.5.4"
 
-[dev-dependencies]
-mockall = "0.13.1"
+# urdekcah
+config ={ path = "./config" }
+error = { path = "./error" }
+weather = { path = "./weather" }
+wakatime = { path = "./wakatime" }

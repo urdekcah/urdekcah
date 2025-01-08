@@ -1,4 +1,4 @@
-name: ОБНОВИТЬ ИНФОРМАЦИЮ О ПОГОДЕ
+name: АВТОМАТИЧЕСКИЕ ОБНОВЛЕНИЯ README
 
 on:
   push:
@@ -26,6 +26,7 @@ jobs:
       - name: run binary
         run: ./target/release/urdekcah
         env:
+          WAKATIME_API_KEY: ${{ secrets.WAKATIME_API_KEY }}
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
         
       - name: commit
@@ -35,5 +36,5 @@ jobs:
             git config --global user.name 'github-actions[bot]'
             git config --global user.email 'github-actions[bot]@users.noreply.github.com'
             git add README.md
-            git commit -m "бот: обновить информацию о погоде в README.md" || exit 0
+            git commit -m "README обновлено: добавлены новые данные погоды и статистика" || exit 0
             git push

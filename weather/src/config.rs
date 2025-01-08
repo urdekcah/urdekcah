@@ -2,8 +2,8 @@
 //
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
-use crate::error::WeatherError;
 use anyhow::Result;
+use error::Error;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
@@ -21,7 +21,7 @@ impl WeatherConfig {
   ) -> Result<Self> {
     let api_key = api_key.into();
     if api_key.trim().is_empty() {
-      return Err(WeatherError::InvalidApiKey.into());
+      return Err(Error::InvalidApiKey.into());
     }
 
     Ok(Self {

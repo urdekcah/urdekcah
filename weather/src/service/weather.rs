@@ -2,20 +2,19 @@
 //
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
+use crate::{
+  config::WeatherConfig,
+  models::{api::WeatherResponse, weather::WeatherInfo},
+  API_BASE_URL, REQUEST_TIMEOUT, WEATHER_END,
+};
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
+use error::Error;
 use reqwest::Client;
 use std::fs;
 use tokio::sync::RwLock;
 use tracing::{info, instrument};
 use url::Url;
-
-use crate::{
-  config::WeatherConfig,
-  error::WeatherError,
-  models::{api::WeatherResponse, weather::WeatherInfo},
-  API_BASE_URL, REQUEST_TIMEOUT, WEATHER_END,
-};
 
 pub struct WeatherService {
   config: WeatherConfig,
@@ -43,17 +42,17 @@ impl WeatherService {
 
     let start_marker = content
       .find("<!--START_SECTION:weather:")
-      .ok_or(WeatherError::WeatherSectionNotFound)?;
+      .ok_or(Error::WeatherSectionNotFound)?;
 
     let city_start = start_marker + "<!--START_SECTION:weather:".len();
     let city_end = content[city_start..]
       .find("-->")
-      .ok_or(WeatherError::MissingCityInSection)?;
+      .ok_or(Error::MissingCityInSection)?;
 
     let city = content[city_start..city_start + city_end].trim();
 
     if city.is_empty() {
-      return Err(WeatherError::MissingCityInSection.into());
+      return Err(Error::MissingCityInSection.into());
     }
 
     Ok(city.to_string())
@@ -69,7 +68,7 @@ impl WeatherService {
     }
 
     if city.trim().is_empty() {
-      return Err(WeatherError::InvalidCity("City name cannot be empty".into()).into());
+      return Err(Error::InvalidCity("City name cannot be empty".into()).into());
     }
 
     let url = Url::parse_with_params(
@@ -91,11 +90,9 @@ impl WeatherService {
 
     match response.status() {
       reqwest::StatusCode::OK => (),
-      reqwest::StatusCode::TOO_MANY_REQUESTS => return Err(WeatherError::RateLimitExceeded.into()),
+      reqwest::StatusCode::TOO_MANY_REQUESTS => return Err(Error::RateLimitExceeded.into()),
       status => {
-        return Err(
-          WeatherError::ApiError(format!("API request failed with status: {}", status)).into(),
-        )
+        return Err(Error::ApiError(format!("API request failed with status: {}", status)).into())
       }
     }
 
@@ -106,8 +103,7 @@ impl WeatherService {
 
     if weather_data.cod != 200 {
       return Err(
-        WeatherError::InvalidResponse(format!("Invalid response code: {}", weather_data.cod))
-          .into(),
+        Error::InvalidResponse(format!("Invalid response code: {}", weather_data.cod)).into(),
       );
     }
 
@@ -125,17 +121,17 @@ impl WeatherService {
 
     let section_start = content
       .find("<!--START_SECTION:weather:")
-      .ok_or(WeatherError::WeatherSectionNotFound)?;
+      .ok_or(Error::WeatherSectionNotFound)?;
 
     let end_idx = content
       .find(WEATHER_END)
-      .ok_or(WeatherError::WeatherSectionNotFound)?;
+      .ok_or(Error::WeatherSectionNotFound)?;
 
     let start_marker = &content[section_start
       ..content[section_start..]
         .find("-->")
         .map(|pos| section_start + pos + 3)
-        .ok_or(WeatherError::WeatherSectionNotFound)?];
+        .ok_or(Error::WeatherSectionNotFound)?];
 
     let weather_text = weather.format_readme();
 

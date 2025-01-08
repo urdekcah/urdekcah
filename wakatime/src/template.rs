@@ -5,6 +5,7 @@
 use crate::wakatime::WakaStats;
 use chrono::DateTime;
 use config::Config;
+use error::Error;
 use std::collections::HashSet;
 use tracing::{debug, instrument};
 
@@ -23,7 +24,7 @@ impl Template {
   }
 
   #[instrument(skip(self, stats))]
-  pub fn render(&self, stats: &WakaStats) -> anyhow::Result<String> {
+  pub fn render(&self, stats: &WakaStats) -> Result<String, Error> {
     let mut content = String::new();
 
     if self.config.wakatime.show_title {
@@ -40,26 +41,35 @@ impl Template {
   }
 
   fn render_title(&self, stats: &WakaStats) -> String {
-    let start = DateTime::parse_from_rfc3339(&stats.start)
-      .map(|dt| dt.format("%d %B %Y").to_string())
-      .unwrap_or_else(|_| "Unknown".to_string());
-    let end = DateTime::parse_from_rfc3339(&stats.end)
-      .map(|dt| dt.format("%d %B %Y").to_string())
-      .unwrap_or_else(|_| "Unknown".to_string());
-    format!("From: {} - To: {}\n\n", start, end)
+    let format_date = |date_str: &str| {
+      DateTime::parse_from_rfc3339(date_str)
+        .map(|dt| dt.format("%d %B %Y").to_string())
+        .unwrap_or_else(|_| "Unknown".to_string())
+    };
+
+    format!(
+      "From: {} - To: {}\n\n",
+      format_date(&stats.start),
+      format_date(&stats.end)
+    )
   }
 
   fn render_total_time(&self, stats: &WakaStats) -> String {
-    if self.config.wakatime.show_masked_time {
-      if let Some(total) = &stats.human_readable_total_including_other_language {
-        return format!("Total Time: {}\n\n", total);
-      }
-    } else if self.config.wakatime.show_total {
-      if let Some(total) = &stats.human_readable_total {
-        return format!("Total Time: {}\n\n", total);
-      }
+    match (
+      self.config.wakatime.show_masked_time,
+      self.config.wakatime.show_total,
+    ) {
+      (true, _) => stats
+        .human_readable_total_including_other_language
+        .as_ref()
+        .map(|total| format!("Total Time: {}\n\n", total)),
+      (false, true) => stats
+        .human_readable_total
+        .as_ref()
+        .map(|total| format!("Total Time: {}\n\n", total)),
+      _ => None,
     }
-    String::new()
+    .unwrap_or_default()
   }
 
   #[instrument(skip(self, stats))]
@@ -80,6 +90,7 @@ impl Template {
       .unwrap_or(0);
 
     let mut content = String::new();
+
     for (idx, lang) in stats.languages.iter().enumerate() {
       if ignored_langs.contains(&lang.name) {
         continue;
@@ -87,13 +98,13 @@ impl Template {
 
       let graph = self.make_graph(lang.percent);
       let time_str = if self.config.wakatime.show_time {
-        lang.text.clone()
+        &lang.text
       } else {
-        String::new()
+        ""
       };
 
       content.push_str(&format!(
-        "{:<name_width$} {:<time_width$} {:<graph_width$} {:>6.2} %\n",
+        "{:<name_width$}   {:<time_width$}{:<graph_width$}   {:>05.2} %\n",
         lang.name,
         time_str,
         graph,
@@ -103,15 +114,14 @@ impl Template {
         graph_width = GRAPH_WIDTH
       ));
 
-      if self.config.wakatime.stop_at_other && lang.name == "Other" {
-        break;
-      }
-
-      if self.config.wakatime.lang_count > 0 && idx + 1 >= self.config.wakatime.lang_count as usize
+      if self.config.wakatime.stop_at_other && lang.name == "Other"
+        || self.config.wakatime.lang_count > 0
+          && idx + 1 >= self.config.wakatime.lang_count as usize
       {
         break;
       }
     }
+
     content
   }
 
@@ -123,19 +133,18 @@ impl Template {
 
     let length = GRAPH_WIDTH;
     let markers = blocks.len() - 1;
-    let proportion = percent / 100.0 * length as f64;
+    let proportion = (percent / 100.0 * length as f64).min(length as f64);
 
     let full_blocks = (proportion + 0.5 / markers as f64) as usize;
-    let mut graph = blocks[blocks.len() - 1].to_string().repeat(full_blocks);
+    let mut graph = String::with_capacity(length);
+    graph.extend(std::iter::repeat(blocks[blocks.len() - 1]).take(full_blocks));
 
     let remainder = ((proportion - full_blocks as f64) * markers as f64 + 0.5) as usize;
-    if remainder > 0 {
+    if remainder > 0 && remainder < blocks.len() {
       graph.push(blocks[remainder]);
     }
 
-    let empty_blocks = length - graph.chars().count();
-    graph.push_str(&blocks[0].to_string().repeat(empty_blocks));
-
+    graph.extend(std::iter::repeat(blocks[0]).take(length - graph.chars().count()));
     graph
   }
 }

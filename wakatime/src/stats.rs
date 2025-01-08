@@ -7,6 +7,7 @@ use crate::{
   wakatime::{WakaStats, WakaTimeApi},
 };
 use config::Config;
+use error::Error;
 use std::{fs, path::Path};
 use tracing::{debug, instrument};
 
@@ -21,19 +22,18 @@ impl<T: WakaTimeApi> StatsGenerator<T> {
   }
 
   #[instrument(skip(self))]
-  pub async fn generate_stats(&self) -> anyhow::Result<String> {
+  pub async fn generate_stats(&self) -> Result<String, Error> {
     debug!("Fetching WakaTime stats");
     let stats = self
       .client
       .fetch_stats(&self.config.wakatime.time_range)
       .await?;
     debug!("Preparing content from stats");
-    let content = self.prepare_content(&stats)?;
-    Ok(content)
+    self.prepare_content(&stats)
   }
 
   #[instrument(skip(self, stats))]
-  fn prepare_content(&self, stats: &WakaStats) -> anyhow::Result<String> {
+  fn prepare_content(&self, stats: &WakaStats) -> Result<String, Error> {
     let template = Template::new(&self.config);
     template.render(stats)
   }
@@ -43,7 +43,7 @@ impl<T: WakaTimeApi> StatsGenerator<T> {
     &self,
     path: P,
     content: &str,
-  ) -> anyhow::Result<bool> {
+  ) -> Result<bool, Error> {
     let readme = fs::read_to_string(path.as_ref())?;
 
     let start_comment = format!("<!--START_SECTION:{}-->", self.config.wakatime.section_name);
@@ -60,7 +60,9 @@ impl<T: WakaTimeApi> StatsGenerator<T> {
       regex::escape(&end_comment)
     );
 
-    let re = regex::Regex::new(&pattern)?;
+    let re = regex::Regex::new(&pattern)
+      .map_err(|e| Error::TemplateError(format!("Invalid regex pattern: {}", e)))?;
+
     let new_readme = re.replace(&readme, replacement);
 
     if new_readme != readme {

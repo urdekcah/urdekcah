@@ -1,0 +1,12 @@
+[wakatime]
+show_title = false
+section_name = "waka"
+blocks = "░▒▓█"
+code_lang = "txt"
+time_range = "all_time"
+lang_count = 5
+show_time = true
+show_total = true
+show_masked_time = false
+stop_at_other = false
+ignored_languages = "YAML JSON TOML MAKEFILE SQL MARKDOWN GIT HTML CSS EJS"

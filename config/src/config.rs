@@ -18,7 +18,7 @@ pub struct WakaTimeConfig {
   pub section_name: String,
   pub blocks: String,
   pub code_lang: String,
-  pub time_range: TimeRange,
+  pub time_range: WakaTimeRange,
   pub lang_count: i32,
   pub show_time: bool,
   pub show_total: bool,
@@ -29,7 +29,7 @@ pub struct WakaTimeConfig {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum TimeRange {
+pub enum WakaTimeRange {
   Last7Days,
   Last30Days,
   Last6Months,
@@ -47,14 +47,14 @@ impl Config {
   }
 }
 
-impl std::fmt::Display for TimeRange {
+impl std::fmt::Display for WakaTimeRange {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let range = match self {
-      TimeRange::Last7Days => "last_7_days",
-      TimeRange::Last30Days => "last_30_days",
-      TimeRange::Last6Months => "last_6_months",
-      TimeRange::LastYear => "last_year",
-      TimeRange::AllTime => "all_time",
+      WakaTimeRange::Last7Days => "last_7_days",
+      WakaTimeRange::Last30Days => "last_30_days",
+      WakaTimeRange::Last6Months => "last_6_months",
+      WakaTimeRange::LastYear => "last_year",
+      WakaTimeRange::AllTime => "all_time",
     };
     write!(f, "{}", range)
   }

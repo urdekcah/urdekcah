@@ -2,17 +2,18 @@
 //
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
-use crate::{config::TimeRange, error::WakaError};
+use crate::error::WakaError;
 use async_trait::async_trait;
 use base64::{engine::general_purpose::STANDARD, Engine};
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, USER_AGENT};
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::instrument;
+use config::WakaTimeRange;
 
 #[async_trait]
 pub trait WakaTimeApi {
-  async fn fetch_stats(&self, time_range: &TimeRange) -> anyhow::Result<WakaStats>;
+  async fn fetch_stats(&self, time_range: &WakaTimeRange) -> anyhow::Result<WakaStats>;
 }
 
 #[derive(Debug, Clone)]
@@ -51,7 +52,7 @@ impl WakaTimeClient {
 #[async_trait]
 impl WakaTimeApi for WakaTimeClient {
   #[instrument(skip(self))]
-  async fn fetch_stats(&self, time_range: &TimeRange) -> anyhow::Result<WakaStats> {
+  async fn fetch_stats(&self, time_range: &WakaTimeRange) -> anyhow::Result<WakaStats> {
     let encoded_key = STANDARD.encode(&self.api_key);
     let mut headers = HeaderMap::new();
     headers.insert(

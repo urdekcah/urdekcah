@@ -3,12 +3,12 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use crate::{
-  config::Config,
   template::Template,
   wakatime::{WakaStats, WakaTimeApi},
 };
 use std::{fs, path::Path};
 use tracing::{debug, instrument};
+use config::Config;
 
 pub struct StatsGenerator<T: WakaTimeApi> {
   config: Config,

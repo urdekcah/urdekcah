@@ -5,8 +5,9 @@
 use anyhow::{Context, Result};
 use std::env;
 use tracing::{error, info};
-use wakatime::{Config, StatsGenerator, WakaTimeClient};
+use wakatime::{StatsGenerator, WakaTimeClient};
 use weather::{WeatherConfig, WeatherService};
+use config::Config;
 
 #[tokio::main]
 async fn main() -> Result<()> {

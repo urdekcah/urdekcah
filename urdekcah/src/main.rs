@@ -4,7 +4,8 @@
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use anyhow::{Context, Result};
 use std::env;
-use tracing::error;
+use tracing::{error, info};
+use wakatime::{Config, StatsGenerator, WakaTimeClient};
 use weather::{WeatherConfig, WeatherService};
 
 #[tokio::main]
@@ -24,6 +25,21 @@ async fn main() -> Result<()> {
   if let Err(e) = service.run().await {
     error!("Failed to update weather: {:?}", e);
     std::process::exit(1);
+  }
+
+  let api_key =
+    env::var("WAKATIME_API_KEY").context("Missing WAKATIME_API_KEY environment variable")?;
+
+  let config = Config::from_file("urdekcah.toml")?;
+  let client = WakaTimeClient::new(&api_key);
+  let generator = StatsGenerator::new(config, client);
+
+  info!("Generating WakaTime stats");
+  let stats = generator.generate_stats().await?;
+
+  info!("Updating README.md");
+  if generator.update_readme("README.md", &stats)? {
+    info!("README.md updated successfully");
   }
 
   Ok(())

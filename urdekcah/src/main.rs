@@ -3,11 +3,11 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use anyhow::{Context, Result};
+use config::Config;
 use std::env;
 use tracing::{error, info};
 use wakatime::{StatsGenerator, WakaTimeClient};
 use weather::{WeatherConfig, WeatherService};
-use config::Config;
 
 #[tokio::main]
 async fn main() -> Result<()> {

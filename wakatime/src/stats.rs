@@ -6,9 +6,9 @@ use crate::{
   template::Template,
   wakatime::{WakaStats, WakaTimeApi},
 };
+use config::Config;
 use std::{fs, path::Path};
 use tracing::{debug, instrument};
-use config::Config;
 
 pub struct StatsGenerator<T: WakaTimeApi> {
   config: Config,

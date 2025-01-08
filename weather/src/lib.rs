@@ -3,13 +3,11 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 pub mod config;
-pub mod error;
 pub mod models;
 pub mod service;
 pub mod utils;
 
 pub use config::WeatherConfig;
-pub use error::WeatherError;
 pub use models::weather::WeatherInfo;
 pub use service::weather::WeatherService;
 

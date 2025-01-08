@@ -22,3 +22,4 @@ tracing-subscriber.workspace = true
 
 # urdekcah
 config.workspace = true
+error.workspace = true

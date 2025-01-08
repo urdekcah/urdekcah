@@ -2,6 +2,7 @@
 members = [
   "urdekcah",
   "config",
+  "error",
   "wakatime",
   "weather"
 ]
@@ -31,5 +32,6 @@ url = "2.5.4"
 
 # urdekcah
 config ={ path = "./config" }
+error = { path = "./error" }
 weather = { path = "./weather" }
 wakatime = { path = "./wakatime" }

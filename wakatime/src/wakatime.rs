@@ -2,14 +2,14 @@
 //
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
-use crate::error::WakaError;
 use async_trait::async_trait;
 use base64::{engine::general_purpose::STANDARD, Engine};
+use config::WakaTimeRange;
+use error::Error;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, USER_AGENT};
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::instrument;
-use config::WakaTimeRange;
 
 #[async_trait]
 pub trait WakaTimeApi {
@@ -72,7 +72,7 @@ impl WakaTimeApi for WakaTimeClient {
     let response = self.client.get(&url).headers(headers).send().await?;
 
     if !response.status().is_success() {
-      return Err(WakaError::ApiError(format!("API request failed: {}", response.status())).into());
+      return Err(Error::ApiError(format!("API request failed: {}", response.status())).into());
     }
 
     let data: serde_json::Value = response.json().await?;

@@ -4,9 +4,9 @@
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use crate::wakatime::WakaStats;
 use chrono::DateTime;
+use config::Config;
 use std::collections::HashSet;
 use tracing::{debug, instrument};
-use config::Config;
 
 const GRAPH_WIDTH: usize = 25;
 const TIME_WIDTH: usize = 16;

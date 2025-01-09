@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "urdekcah",
+  "telegram",
   "config",
   "error",
   "wakatime",
@@ -31,6 +32,7 @@ base64 = "0.22.1"
 url = "2.5.4"
 
 # urdekcah
+telegram = { path = "./telegram" }
 config ={ path = "./config" }
 error = { path = "./error" }
 weather = { path = "./weather" }

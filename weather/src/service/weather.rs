@@ -8,8 +8,8 @@ use crate::{
   API_BASE_URL, REQUEST_TIMEOUT, WEATHER_END,
 };
 use anyhow::{Context, Result};
+use base::Error;
 use chrono::{DateTime, Utc};
-use error::Error;
 use reqwest::Client;
 use std::fs;
 use tokio::sync::RwLock;

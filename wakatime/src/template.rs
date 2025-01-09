@@ -3,9 +3,8 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use crate::wakatime::WakaStats;
+use base::{Config, Error};
 use chrono::DateTime;
-use config::Config;
-use error::Error;
 use std::collections::HashSet;
 use tracing::{debug, instrument};
 

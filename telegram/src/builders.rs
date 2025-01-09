@@ -7,7 +7,7 @@ use crate::{
   config::{TelegramConfig, MAX_MESSAGE_LENGTH},
   types::{FileType, InlineKeyboard, InlineKeyboardButton, Message, ParseMode},
 };
-use error::Error;
+use base::Error;
 use std::path::Path;
 
 #[derive(Default)]

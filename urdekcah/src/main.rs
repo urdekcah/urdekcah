@@ -3,7 +3,7 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use anyhow::{Context, Result};
-use config::Config;
+use base::Config;
 use std::{env, path::PathBuf, time::Duration};
 use tracing::{info, instrument, warn};
 use wakatime::{StatsGenerator, WakaTimeApi, WakaTimeClient};

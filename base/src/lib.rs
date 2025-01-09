@@ -3,5 +3,7 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 mod config;
+mod error;
 
-pub use crate::config::*;
+pub use config::*;
+pub use error::*;

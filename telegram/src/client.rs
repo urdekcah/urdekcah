@@ -7,7 +7,7 @@ use crate::{
   config::{TelegramConfig, TELEGRAM_API_BASE},
   types::{FileType, InlineKeyboard, InlineKeyboardButton, Message, TelegramResponse},
 };
-use error::Error;
+use base::Error;
 use reqwest::{
   multipart::{Form, Part},
   Client,

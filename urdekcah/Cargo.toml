@@ -10,6 +10,6 @@ tokio.workspace = true
 anyhow.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
-config.workspace = true
+base.workspace = true
 weather.workspace = true
 wakatime.workspace = true

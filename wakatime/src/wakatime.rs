@@ -3,8 +3,8 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use async_trait::async_trait;
+use base::{Error, WakaTimeRange};
 use base64::{engine::general_purpose::STANDARD, Engine};
-use error::Error;
 use serde::{Deserialize, Serialize};
 use std::{sync::Arc, time::Duration};
 use tokio::time::timeout;
@@ -15,7 +15,7 @@ const USER_AGENT_STRING: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO
 
 #[async_trait]
 pub trait WakaTimeApi: Send + Sync {
-  async fn fetch_stats(&self, time_range: &config::WakaTimeRange) -> Result<WakaStats, Error>;
+  async fn fetch_stats(&self, time_range: &WakaTimeRange) -> Result<WakaStats, Error>;
 }
 
 #[derive(Debug, Clone)]
@@ -89,7 +89,7 @@ impl WakaTimeClient {
 #[async_trait]
 impl WakaTimeApi for WakaTimeClient {
   #[instrument(skip(self))]
-  async fn fetch_stats(&self, time_range: &config::WakaTimeRange) -> Result<WakaStats, Error> {
+  async fn fetch_stats(&self, time_range: &WakaTimeRange) -> Result<WakaStats, Error> {
     let url = format!("{}/v1/users/current/stats/{}", self.base_url, time_range);
     let headers = self.build_headers()?;
 

@@ -6,8 +6,7 @@ use crate::{
   template::Template,
   wakatime::{WakaStats, WakaTimeApi},
 };
-use config::Config;
-use error::Error;
+use base::{Config, Error};
 use std::{fs, path::Path};
 use tracing::{debug, instrument};
 

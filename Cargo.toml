@@ -2,8 +2,7 @@
 members = [
   "urdekcah",
   "telegram",
-  "config",
-  "error",
+  "base",
   "wakatime",
   "weather"
 ]
@@ -33,7 +32,6 @@ url = "2.5.4"
 
 # urdekcah
 telegram = { path = "./telegram" }
-config ={ path = "./config" }
-error = { path = "./error" }
+base = { path = "./base" }
 weather = { path = "./weather" }
 wakatime = { path = "./wakatime" }

@@ -3,7 +3,7 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use super::api::WeatherResponse;
-use crate::WEATHER_END;
+use crate::{HTML_COMMENT_END, LAST_UPDATE_PREFIX, WEATHER_END};
 use anyhow::{Context, Result};
 use chrono::{DateTime, FixedOffset, TimeZone, Utc};
 use serde::Serialize;
@@ -18,6 +18,7 @@ pub struct WeatherInfo {
   pub sunset: DateTime<FixedOffset>,
   pub location: String,
   pub country: String,
+  pub last_update: DateTime<Utc>,
 }
 
 impl WeatherInfo {
@@ -50,24 +51,34 @@ impl WeatherInfo {
       sunset,
       location: response.name,
       country: response.sys.country,
+      last_update: Utc::now(),
     })
   }
 
   pub(crate) fn format_readme(&self) -> String {
     let today = self.sunrise.format("%B %d, %Y");
-    format!(
-      "Currently in **{}** ({}), the weather is: **{:.1}°C** (feels like **{:.1}°C**), ***{}***<br/>\n\
-      On *{}*, the *sun rises* at 🌅**{}** and *sets* at 🌇**{}**.\n\
-      {}",
-      self.location,
-      self.country,
-      self.temp,
-      self.feels_like,
-      self.condition_desc,
-      today,
-      self.sunrise.format("%H:%M"),
-      self.sunset.format("%H:%M"),
-      WEATHER_END,
-    )
+
+    let weather_text = format!(
+        "Currently in **{}** ({}), the weather is: **{:.1}°C** (feels like **{:.1}°C**), ***{}***<br/>\n\
+        On *{}*, the *sun rises* at 🌅**{}** and *sets* at 🌇**{}**.",
+        self.location,
+        self.country,
+        self.temp,
+        self.feels_like,
+        self.condition_desc,
+        today,
+        self.sunrise.format("%H:%M"),
+        self.sunset.format("%H:%M")
+    );
+
+    let current_time = Utc::now();
+    let last_update_str = format!(
+      "{}{}{}\n",
+      LAST_UPDATE_PREFIX,
+      current_time.format("%Y-%m-%d %H:%M:%S"),
+      HTML_COMMENT_END
+    );
+
+    format!("{}{}\n{}", last_update_str, weather_text, WEATHER_END)
   }
 }

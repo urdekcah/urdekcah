@@ -41,6 +41,18 @@ pub struct FileData<'a> {
   file_name: Option<String>,
   caption: Option<&'a str>,
   file_type: FileType,
+  buttons: Vec<Vec<(String, String)>>,
+}
+
+#[derive(Debug, Serialize)]
+struct InlineKeyboard {
+  inline_keyboard: Vec<Vec<InlineKeyboardButton>>,
+}
+
+#[derive(Debug, Serialize)]
+struct InlineKeyboardButton {
+  text: String,
+  url: String,
 }
 
 #[derive(Clone, Debug)]
@@ -202,11 +214,33 @@ impl TelegramClient {
       file_part,
     );
 
-    let form = if let Some(caption) = file_data.caption {
+    let mut form = if let Some(caption) = file_data.caption {
       form.text("caption", caption.to_string())
     } else {
       form
     };
+
+    if !file_data.buttons.is_empty() {
+      let reply_markup = InlineKeyboard {
+        inline_keyboard: file_data
+          .buttons
+          .iter()
+          .map(|row| {
+            row
+              .iter()
+              .map(|(text, url)| InlineKeyboardButton {
+                text: text.clone(),
+                url: url.clone(),
+              })
+              .collect()
+          })
+          .collect(),
+      };
+      form = form.text(
+        "reply_markup",
+        serde_json::to_string(&reply_markup).unwrap(),
+      );
+    }
 
     let response = self
       .client
@@ -290,6 +324,8 @@ struct Message<'a> {
   disable_notification: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
   reply_to_message_id: Option<i64>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  reply_markup: Option<InlineKeyboard>,
 }
 
 #[derive(Default)]
@@ -300,6 +336,7 @@ pub struct MessageBuilder<'a> {
   disable_preview: Option<bool>,
   silent: Option<bool>,
   reply_to: Option<i64>,
+  buttons: Vec<Vec<(String, String)>>,
 }
 
 impl<'a> MessageBuilder<'a> {
@@ -337,6 +374,15 @@ impl<'a> MessageBuilder<'a> {
     self
   }
 
+  pub fn button(mut self, buttons: Vec<(impl Into<String>, impl Into<String>)>) -> Self {
+    let row = buttons
+      .into_iter()
+      .map(|(text, url)| (text.into(), url.into()))
+      .collect();
+    self.buttons.push(row);
+    self
+  }
+
   pub async fn send(self, client: &TelegramClient) -> Result<(), Error> {
     let chat_id = self
       .chat_id
@@ -354,6 +400,23 @@ impl<'a> MessageBuilder<'a> {
       )));
     }
 
+    let reply_markup = if !self.buttons.is_empty() {
+      Some(InlineKeyboard {
+        inline_keyboard: self
+          .buttons
+          .into_iter()
+          .map(|row| {
+            row
+              .into_iter()
+              .map(|(text, url)| InlineKeyboardButton { text, url })
+              .collect()
+          })
+          .collect(),
+      })
+    } else {
+      None
+    };
+
     let message = Message {
       chat_id,
       text,
@@ -361,6 +424,7 @@ impl<'a> MessageBuilder<'a> {
       disable_web_page_preview: self.disable_preview,
       disable_notification: self.silent,
       reply_to_message_id: self.reply_to,
+      reply_markup,
     };
 
     client.send_message(message).await
@@ -374,6 +438,7 @@ pub struct FileMessageBuilder<'a> {
   file_name: Option<String>,
   caption: Option<&'a str>,
   file_type: Option<FileType>,
+  buttons: Vec<Vec<(String, String)>>,
 }
 
 impl<'a> FileMessageBuilder<'a> {
@@ -406,6 +471,15 @@ impl<'a> FileMessageBuilder<'a> {
     self
   }
 
+  pub fn buttons(mut self, buttons: Vec<(impl Into<String>, impl Into<String>)>) -> Self {
+    let row = buttons
+      .into_iter()
+      .map(|(text, url)| (text.into(), url.into()))
+      .collect();
+    self.buttons.push(row);
+    self
+  }
+
   pub async fn send(self, client: &TelegramClient) -> Result<(), Error> {
     let chat_id = self
       .chat_id
@@ -424,6 +498,7 @@ impl<'a> FileMessageBuilder<'a> {
       file_name: self.file_name,
       caption: self.caption,
       file_type,
+      buttons: self.buttons,
     };
 
     client.send_file(chat_id, file_data).await

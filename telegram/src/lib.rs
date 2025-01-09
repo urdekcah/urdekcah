@@ -38,6 +38,7 @@ pub enum FileType {
 #[derive(Debug)]
 pub struct FileData<'a> {
   file_path: &'a Path,
+  file_name: Option<String>,
   caption: Option<&'a str>,
   file_type: FileType,
 }
@@ -171,12 +172,17 @@ impl TelegramClient {
       .map_err(Error::IoError)?;
 
     let file_name = file_data
-      .file_path
-      .file_name()
-      .and_then(|n| n.to_str())
-      .unwrap_or("file");
+      .file_name
+      .as_ref()
+      .map(|s| s.as_str())
+      .unwrap_or_else(|| {
+        file_data
+          .file_path
+          .file_name()
+          .and_then(|n| n.to_str())
+          .unwrap_or("file")
+      });
 
-    // Read the entire file into memory
     let mut buffer = Vec::new();
     file
       .read_to_end(&mut buffer)
@@ -365,6 +371,7 @@ impl<'a> MessageBuilder<'a> {
 pub struct FileMessageBuilder<'a> {
   chat_id: Option<i64>,
   file_path: Option<&'a Path>,
+  file_name: Option<String>,
   caption: Option<&'a str>,
   file_type: Option<FileType>,
 }
@@ -381,6 +388,11 @@ impl<'a> FileMessageBuilder<'a> {
 
   pub fn file(mut self, path: &'a Path) -> Self {
     self.file_path = Some(path);
+    self
+  }
+
+  pub fn file_name(mut self, name: impl Into<String>) -> Self {
+    self.file_name = Some(name.into());
     self
   }
 
@@ -409,6 +421,7 @@ impl<'a> FileMessageBuilder<'a> {
 
     let file_data = FileData {
       file_path,
+      file_name: self.file_name,
       caption: self.caption,
       file_type,
     };

@@ -11,5 +11,6 @@ anyhow.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 base.workspace = true
+telegram.workspace = true
 weather.workspace = true
 wakatime.workspace = true

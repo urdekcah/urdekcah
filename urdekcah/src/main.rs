@@ -5,7 +5,8 @@
 use anyhow::{Context, Result};
 use base::Config;
 use std::{env, path::PathBuf};
-use tracing::{info, instrument};
+use telegram::TelegramClient;
+use tracing::instrument;
 use wakatime::WakaTimeService;
 use weather::{WeatherConfig, WeatherService};
 
@@ -13,6 +14,8 @@ use weather::{WeatherConfig, WeatherService};
 pub struct ServiceConfig {
   weather_api_key: String,
   wakatime_api_key: String,
+  telegram_bot_token: String,
+  telegram_chat_id: i64,
   readme_path: PathBuf,
   config_path: PathBuf,
 }
@@ -20,6 +23,8 @@ pub struct ServiceConfig {
 pub struct ServiceRunner {
   weather_service: WeatherService,
   wakatime_service: WakaTimeService,
+  tg: TelegramClient,
+  tg_chat_id: i64,
 }
 
 #[cfg(debug_assertions)]
@@ -46,6 +51,10 @@ async fn main() -> Result<()> {
   let config = ServiceConfig {
     weather_api_key: env::var("OPENWEATHER_API_KEY").context("Missing OPENWEATHER_API_KEY")?,
     wakatime_api_key: env::var("WAKATIME_API_KEY").context("Missing WAKATIME_API_KEY")?,
+    telegram_bot_token: env::var("TELEGRAM_BOT_TOKEN").context("Missing TELEGRAM_BOT_TOKEN")?,
+    telegram_chat_id: env::var("TELEGRAM_CHAT_ID")
+      .context("Missing TELEGRAM_CHAT_ID")?
+      .parse()?,
     readme_path: "README.md".into(),
     config_path: "urdekcah.toml".into(),
   };
@@ -66,28 +75,61 @@ impl ServiceRunner {
         Config::from_file(&config.config_path)?,
         config.wakatime_api_key.clone(),
       ),
+      tg: TelegramClient::builder()
+        .token(config.telegram_bot_token.clone())
+        .build()?,
+      tg_chat_id: config.telegram_chat_id,
     })
   }
 
   #[instrument(skip(self))]
   pub async fn run(&self) -> Result<()> {
-    if let Err(e) = self.weather_service.run().await {
-      tracing::warn!("Weather service error: {e:?}");
+    match self.weather_service.run().await {
+      Ok(result) => {
+        let weather = &result.weather;
+        self.tg.message()
+          .chat_id(self.tg_chat_id)
+          .text(
+            format!(
+              "В настоящее время в *{}* погода,\nТекущая темп.: *{}°C*\nОщущается как: *{}°C*\nТекущая погода: *{}*\nПоследнее обновление было в: _{}_",
+              weather.location, weather.temp, weather.feels_like,
+              weather.condition_desc,
+              result.last_update.map_or("N/A".to_string(), |dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
+            ).as_str()
+          )
+          .parse_mode(telegram::ParseMode::MarkdownV2)
+          .send(&self.tg)
+          .await?;
+      }
+      Err(e) => tracing::warn!("Weather service error: {e:?}"),
     }
 
     match self.wakatime_service.run().await {
       Ok(update_result) => {
         if update_result.was_updated {
-          info!(
-            "WakaTime stats updated successfully. Previous update: {:?}, Current update: {}",
-            update_result.last_update,
-            update_result.current_update.format("%Y-%m-%d %H:%M:%S")
-          );
+          self.tg.message()
+          .chat_id(self.tg_chat_id)
+          .text(
+            format!(
+              "WakaTime статистика успешно обновлена. Предыдущее обновление: *{}*",
+              update_result.last_update.map_or("N/A".to_string(), |dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
+            ).as_str()
+          )
+          .parse_mode(telegram::ParseMode::MarkdownV2)
+          .send(&self.tg)
+          .await?;
         } else {
-          info!(
-            "No WakaTime stats update needed. Last update: {:?}",
-            update_result.last_update
-          );
+          self.tg.message()
+          .chat_id(self.tg_chat_id)
+          .text(
+            format!(
+              "Обновление статистики WakaTime не требуется. Последнее обновление: *{}*",
+              update_result.last_update.map_or("N/A".to_string(), |dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
+            ).as_str()
+          )
+          .parse_mode(telegram::ParseMode::MarkdownV2)
+          .send(&self.tg)
+          .await?;
         }
       }
       Err(e) => tracing::warn!("WakaTime service error: {e:?}"),

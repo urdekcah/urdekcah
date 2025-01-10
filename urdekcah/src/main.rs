@@ -107,29 +107,39 @@ impl ServiceRunner {
     match self.wakatime_service.run().await {
       Ok(update_result) => {
         if update_result.was_updated {
-          self.tg.message()
-          .chat_id(self.tg_chat_id)
-          .text(
-            format!(
-              "WakaTime статистика успешно обновлена. Предыдущее обновление: *{}*",
-              update_result.last_update.map_or("N/A".to_string(), |dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
-            ).as_str()
-          )
-          .parse_mode(telegram::ParseMode::MarkdownV2)
-          .send(&self.tg)
-          .await?;
+          self
+            .tg
+            .message()
+            .chat_id(self.tg_chat_id)
+            .text(
+              format!(
+                "WakaTime статистика успешно обновлена.\nПредыдущее обновление: *{}*",
+                update_result.last_update.map_or("N/A".to_string(), |dt| dt
+                  .format("%Y-%m-%d %H:%M:%S")
+                  .to_string())
+              )
+              .as_str(),
+            )
+            .parse_mode(telegram::ParseMode::MarkdownV2)
+            .send(&self.tg)
+            .await?;
         } else {
-          self.tg.message()
-          .chat_id(self.tg_chat_id)
-          .text(
-            format!(
-              "Обновление статистики WakaTime не требуется. Последнее обновление: *{}*",
-              update_result.last_update.map_or("N/A".to_string(), |dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
-            ).as_str()
-          )
-          .parse_mode(telegram::ParseMode::MarkdownV2)
-          .send(&self.tg)
-          .await?;
+          self
+            .tg
+            .message()
+            .chat_id(self.tg_chat_id)
+            .text(
+              format!(
+                "_Обновление статистики WakaTime не требуется._\nПоследнее обновление: *{}*",
+                update_result.last_update.map_or("N/A".to_string(), |dt| dt
+                  .format("%Y-%m-%d %H:%M:%S")
+                  .to_string())
+              )
+              .as_str(),
+            )
+            .parse_mode(telegram::ParseMode::MarkdownV2)
+            .send(&self.tg)
+            .await?;
         }
       }
       Err(e) => tracing::warn!("WakaTime service error: {e:?}"),

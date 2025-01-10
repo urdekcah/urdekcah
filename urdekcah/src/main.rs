@@ -4,12 +4,9 @@
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use anyhow::{Context, Result};
 use base::Config;
-use std::{
-  env,
-  path::{Path, PathBuf},
-};
+use std::{env, path::PathBuf};
 use tracing::{info, instrument};
-use wakatime::{StatsGenerator, WakaTimeApi, WakaTimeClient};
+use wakatime::WakaTimeService;
 use weather::{WeatherConfig, WeatherService};
 
 #[derive(Debug, Clone)]
@@ -20,10 +17,9 @@ pub struct ServiceConfig {
   config_path: PathBuf,
 }
 
-pub struct ServiceRunner<T: WakaTimeApi> {
+pub struct ServiceRunner {
   weather_service: WeatherService,
-  stats_generator: StatsGenerator<T>,
-  config: ServiceConfig,
+  wakatime_service: WakaTimeService,
 }
 
 #[cfg(debug_assertions)]
@@ -52,26 +48,22 @@ async fn main() -> Result<()> {
     config_path: "urdekcah.toml".into(),
   };
 
-  let wak = config.wakatime_api_key.clone();
-  ServiceRunner::new(config, WakaTimeClient::new(&wak))?
-    .run()
-    .await
+  ServiceRunner::new(config)?.run().await
 }
 
-impl<T: WakaTimeApi> ServiceRunner<T> {
-  #[instrument(skip(config, client))]
-  pub fn new(config: ServiceConfig, client: T) -> Result<Self> {
+impl ServiceRunner {
+  #[instrument(skip(config))]
+  pub fn new(config: ServiceConfig) -> Result<Self> {
     Ok(Self {
       weather_service: WeatherService::new(WeatherConfig::new(
         config.weather_api_key.clone(),
         config.readme_path.to_str().unwrap_or("README.md"),
         std::time::Duration::from_secs(300),
       )?),
-      stats_generator: StatsGenerator::new(
-        Config::from_file(&config.config_path).context("Failed to load WakaTime config")?,
-        client,
+      wakatime_service: WakaTimeService::new(
+        Config::from_file(&config.config_path)?,
+        config.wakatime_api_key.clone(),
       ),
-      config,
     })
   }
 
@@ -81,22 +73,22 @@ impl<T: WakaTimeApi> ServiceRunner<T> {
       tracing::warn!("Weather service error: {e:?}");
     }
 
-    let stat_result = self.stats_generator.generate_stats().await?;
-    let update_result = self
-      .stats_generator
-      .update_readme(Path::new("README.md"), &stat_result.stats)?;
-
-    if update_result.was_updated {
-      info!(
-        "WakaTime stats updated successfully. Previous update: {:?}, Current update: {}",
-        update_result.last_update,
-        update_result.current_update.format("%Y-%m-%d %H:%M:%S")
-      );
-    } else {
-      info!(
-        "No WakaTime stats update needed. Last update: {:?}",
-        update_result.last_update
-      );
+    match self.wakatime_service.run().await {
+      Ok(update_result) => {
+        if update_result.was_updated {
+          info!(
+            "WakaTime stats updated successfully. Previous update: {:?}, Current update: {}",
+            update_result.last_update,
+            update_result.current_update.format("%Y-%m-%d %H:%M:%S")
+          );
+        } else {
+          info!(
+            "No WakaTime stats update needed. Last update: {:?}",
+            update_result.last_update
+          );
+        }
+      }
+      Err(e) => tracing::warn!("WakaTime service error: {e:?}"),
     }
 
     Ok(())

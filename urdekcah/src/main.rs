@@ -39,6 +39,8 @@ fn setup_logging() {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+  #[cfg(debug_assertions)]
+  base::dotenv::load()?;
   setup_logging();
 
   let config = ServiceConfig {

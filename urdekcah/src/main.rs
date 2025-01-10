@@ -4,7 +4,10 @@
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use anyhow::{Context, Result};
 use base::Config;
-use std::{env, path::PathBuf};
+use std::{
+  env,
+  path::{Path, PathBuf},
+};
 use tracing::{info, instrument};
 use wakatime::{StatsGenerator, WakaTimeApi, WakaTimeClient};
 use weather::{WeatherConfig, WeatherService};
@@ -78,19 +81,22 @@ impl<T: WakaTimeApi> ServiceRunner<T> {
       tracing::warn!("Weather service error: {e:?}");
     }
 
-    match self
+    let stat_result = self.stats_generator.generate_stats().await?;
+    let update_result = self
       .stats_generator
-      .generate_stats()
-      .await
-      .and_then(|stats| {
-        self.stats_generator.update_readme(
-          self.config.readme_path.to_str().unwrap_or("README.md"),
-          &stats,
-        )
-      }) {
-      Ok(true) => info!("Updated WakaTime stats"),
-      Ok(false) => info!("No WakaTime stats update needed"),
-      Err(e) => tracing::warn!("WakaTime update error: {e:?}"),
+      .update_readme(Path::new("README.md"), &stat_result.stats)?;
+
+    if update_result.was_updated {
+      info!(
+        "WakaTime stats updated successfully. Previous update: {:?}, Current update: {}",
+        update_result.last_update,
+        update_result.current_update.format("%Y-%m-%d %H:%M:%S")
+      );
+    } else {
+      info!(
+        "No WakaTime stats update needed. Last update: {:?}",
+        update_result.last_update
+      );
     }
 
     Ok(())

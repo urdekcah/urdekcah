@@ -8,3 +8,7 @@ pub mod wakatime;
 
 pub use stats::StatsGenerator;
 pub use wakatime::{WakaTimeApi, WakaTimeClient};
+
+const LAST_UPDATE_PREFIX: &str = "<!--LAST_WAKA_UPDATE:";
+const HTML_COMMENT_END: &str = "-->";
+const DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";

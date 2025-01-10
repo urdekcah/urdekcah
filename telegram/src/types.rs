@@ -7,8 +7,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Clone, Copy, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum ParseMode {
+  #[serde(rename = "Markdown")]
   Markdown,
+  #[serde(rename = "HTML")]
   Html,
+  #[serde(rename = "MarkdownV2")]
   MarkdownV2,
 }
 
@@ -39,10 +42,10 @@ pub(crate) struct TelegramResponse {
   pub description: String,
 }
 
-#[derive(Serialize)]
-pub(crate) struct Message<'a> {
+#[derive(Debug, Serialize)]
+pub(crate) struct Message {
   pub chat_id: i64,
-  pub text: &'a str,
+  pub text: String,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub parse_mode: Option<ParseMode>,
   #[serde(skip_serializing_if = "Option::is_none")]

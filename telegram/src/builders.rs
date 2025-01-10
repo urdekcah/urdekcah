@@ -65,14 +65,45 @@ impl<'a> MessageBuilder<'a> {
     self
   }
 
+  fn escape_markdown_v2(text: &impl ToString) -> String {
+    let mut escaped = String::new();
+    let text = text.to_string();
+    let mut chars = text.chars().peekable();
+
+    while let Some(current) = chars.next() {
+      match current {
+        '`' => {
+          let mut count = 1;
+          while chars.peek() == Some(&'`') {
+            chars.next();
+            count += 1;
+          }
+
+          for _ in 0..count {
+            escaped.push('\\');
+            escaped.push('`');
+          }
+        }
+        '[' | ']' | '(' | ')' | '~' | '>' | '#' | '+' | '-' | '=' | '|' | '{' | '}' | '.' | '!'
+        | '\\' => {
+          escaped.push('\\');
+          escaped.push(current);
+        }
+        _ => escaped.push(current),
+      }
+    }
+    escaped
+  }
+
   pub async fn send(self, client: &TelegramClient) -> Result<(), Error> {
     let chat_id = self
       .chat_id
       .ok_or_else(|| Error::ApiError("Chat ID is required".into()))?;
 
-    let text = self
+    let mut text = self
       .text
-      .ok_or_else(|| Error::ApiError("Message text is required".into()))?;
+      .ok_or_else(|| Error::ApiError("Message text is required".into()))?
+      .to_owned();
 
     if text.len() > MAX_MESSAGE_LENGTH {
       return Err(Error::ApiError(format!(
@@ -98,6 +129,10 @@ impl<'a> MessageBuilder<'a> {
     } else {
       None
     };
+
+    if let Some(ParseMode::MarkdownV2) = self.parse_mode {
+      text = Self::escape_markdown_v2(&text);
+    }
 
     let message = Message {
       chat_id,

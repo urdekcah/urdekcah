@@ -35,7 +35,7 @@ impl TelegramClient {
   }
 
   #[instrument(skip(self, message), fields(chat_id = message.chat_id))]
-  pub(crate) async fn send_message(&self, message: Message<'_>) -> Result<(), Error> {
+  pub(crate) async fn send_message(&self, message: Message) -> Result<(), Error> {
     let url = format!("{}{}/sendMessage", TELEGRAM_API_BASE, self.config.token);
 
     for attempt in 0..=self.config.retry_attempts {
@@ -58,7 +58,7 @@ impl TelegramClient {
     Err(Error::ApiError("Max retry attempts reached".into()))
   }
 
-  async fn try_send_message(&self, url: &str, message: &Message<'_>) -> Result<(), Error> {
+  async fn try_send_message(&self, url: &str, message: &Message) -> Result<(), Error> {
     let response = self
       .client
       .post(url)

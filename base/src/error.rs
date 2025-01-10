@@ -20,6 +20,8 @@ pub enum Error {
   TemplateError(String),
   #[error("Regex error: {0}")]
   RegexError(#[from] regex::Error),
+  #[error("Missing city in weather section")]
+  MissingCity,
   #[error("Invalid city name: {0}")]
   InvalidCity(String),
   #[error("Invalid API key")]

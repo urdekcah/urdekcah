@@ -3,12 +3,12 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use super::api::WeatherResponse;
-use crate::{HTML_COMMENT_END, LAST_UPDATE_PREFIX, WEATHER_END};
-use anyhow::{Context, Result};
+use crate::constants::*;
+use base::Error;
 use chrono::{DateTime, FixedOffset, TimeZone, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WeatherInfo {
   pub temp: f64,
   pub feels_like: f64,
@@ -22,24 +22,25 @@ pub struct WeatherInfo {
 }
 
 impl WeatherInfo {
-  pub(crate) fn from_response(response: WeatherResponse) -> Result<Self> {
-    let tz_offset = FixedOffset::east_opt(response.timezone).context("Invalid timezone offset")?;
+  pub fn from_response(response: WeatherResponse) -> Result<Self, Error> {
+    let tz_offset = FixedOffset::east_opt(response.timezone)
+      .ok_or_else(|| Error::InvalidResponse("Invalid timezone offset".to_string()))?;
 
     let weather = response
       .weather
       .first()
-      .context("No weather data available")?;
+      .ok_or_else(|| Error::InvalidResponse("No weather data available".to_string()))?;
 
     let sunrise = Utc
       .timestamp_opt(response.sys.sunrise, 0)
       .single()
-      .context("Invalid sunrise timestamp")?
+      .ok_or_else(|| Error::InvalidResponse("Invalid sunrise timestamp".to_string()))?
       .with_timezone(&tz_offset);
 
     let sunset = Utc
       .timestamp_opt(response.sys.sunset, 0)
       .single()
-      .context("Invalid sunset timestamp")?
+      .ok_or_else(|| Error::InvalidResponse("Invalid sunset timestamp".to_string()))?
       .with_timezone(&tz_offset);
 
     Ok(Self {
@@ -55,30 +56,29 @@ impl WeatherInfo {
     })
   }
 
-  pub(crate) fn format_readme(&self) -> String {
+  pub fn format_readme(&self) -> String {
     let today = self.sunrise.format("%B %d, %Y");
-
-    let weather_text = format!(
-        "Currently in **{}** ({}), the weather is: **{:.1}°C** (feels like **{:.1}°C**), ***{}***<br/>\n\
-        On *{}*, the *sun rises* at 🌅**{}** and *sets* at 🌇**{}**.",
-        self.location,
-        self.country,
-        self.temp,
-        self.feels_like,
-        self.condition_desc,
-        today,
-        self.sunrise.format("%H:%M"),
-        self.sunset.format("%H:%M")
-    );
-
-    let current_time = Utc::now();
-    let last_update_str = format!(
-      "{}{}{}\n",
+    format!(
+      "{}{}{}\n{}",
       LAST_UPDATE_PREFIX,
-      current_time.format("%Y-%m-%d %H:%M:%S"),
-      HTML_COMMENT_END
-    );
+      Utc::now().format(DATETIME_FORMAT),
+      HTML_COMMENT_END,
+      self.format_weather_text(today)
+    )
+  }
 
-    format!("{}{}\n{}", last_update_str, weather_text, WEATHER_END)
+  fn format_weather_text(&self, today: impl std::fmt::Display) -> String {
+    format!(
+      "Currently in **{}** ({}), the weather is: **{:.1}°C** (feels like **{:.1}°C**), ***{}***<br/>\n\
+      On *{}*, the *sun rises* at 🌅**{}** and *sets* at 🌇**{}**.",
+      self.location,
+      self.country,
+      self.temp,
+      self.feels_like,
+      self.condition_desc,
+      today,
+      self.sunrise.format("%H:%M"),
+      self.sunset.format("%H:%M")
+    )
   }
 }

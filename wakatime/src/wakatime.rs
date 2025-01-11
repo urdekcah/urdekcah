@@ -2,20 +2,19 @@
 //
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
+use crate::API_TIMEOUT;
+use crate::USER_AGENT;
 use async_trait::async_trait;
+use base::{Error, WakaTimeRange};
 use base64::{engine::general_purpose::STANDARD, Engine};
-use error::Error;
 use serde::{Deserialize, Serialize};
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 use tokio::time::timeout;
 use tracing::{error, instrument};
 
-const API_TIMEOUT: Duration = Duration::from_secs(30);
-const USER_AGENT_STRING: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
-
 #[async_trait]
 pub trait WakaTimeApi: Send + Sync {
-  async fn fetch_stats(&self, time_range: &config::WakaTimeRange) -> Result<WakaStats, Error>;
+  async fn fetch_stats(&self, time_range: &WakaTimeRange) -> Result<WakaStats, Error>;
 }
 
 #[derive(Debug, Clone)]
@@ -79,7 +78,7 @@ impl WakaTimeClient {
 
     headers.insert(
       reqwest::header::USER_AGENT,
-      reqwest::header::HeaderValue::from_static(USER_AGENT_STRING),
+      reqwest::header::HeaderValue::from_static(USER_AGENT),
     );
 
     Ok(headers)
@@ -89,7 +88,7 @@ impl WakaTimeClient {
 #[async_trait]
 impl WakaTimeApi for WakaTimeClient {
   #[instrument(skip(self))]
-  async fn fetch_stats(&self, time_range: &config::WakaTimeRange) -> Result<WakaStats, Error> {
+  async fn fetch_stats(&self, time_range: &WakaTimeRange) -> Result<WakaStats, Error> {
     let url = format!("{}/v1/users/current/stats/{}", self.base_url, time_range);
     let headers = self.build_headers()?;
 

@@ -3,26 +3,31 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use anyhow::{Context, Result};
-use config::Config;
-use std::{env, path::PathBuf, time::Duration};
-use tracing::{info, instrument, warn};
-use wakatime::{StatsGenerator, WakaTimeApi, WakaTimeClient};
+use base::Config;
+use std::{env, path::PathBuf};
+use telegram::TelegramClient;
+use tracing::instrument;
+use wakatime::WakaTimeService;
 use weather::{WeatherConfig, WeatherService};
 
 #[derive(Debug, Clone)]
 pub struct ServiceConfig {
-  pub(crate) weather_api_key: String,
-  pub(crate) wakatime_api_key: String,
-  pub(crate) readme_path: PathBuf,
-  pub(crate) config_path: PathBuf,
+  weather_api_key: String,
+  wakatime_api_key: String,
+  telegram_bot_token: String,
+  telegram_chat_id: i64,
+  readme_path: PathBuf,
+  config_path: PathBuf,
 }
 
-pub struct ServiceRunner<T: WakaTimeApi> {
-  config: ServiceConfig,
+pub struct ServiceRunner {
   weather_service: WeatherService,
-  stats_generator: StatsGenerator<T>,
+  wakatime_service: WakaTimeService,
+  tg: TelegramClient,
+  tg_chat_id: i64,
 }
 
+#[cfg(debug_assertions)]
 fn setup_logging() {
   tracing_subscriber::fmt()
     .with_file(true)
@@ -32,105 +37,115 @@ fn setup_logging() {
     .init();
 }
 
+#[cfg(not(debug_assertions))]
+fn setup_logging() {
+  tracing_subscriber::fmt().init();
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
+  #[cfg(debug_assertions)]
+  base::dotenv::load()?;
   setup_logging();
 
-  let weather_key =
-    env::var("OPENWEATHER_API_KEY").context("Missing OPENWEATHER_API_KEY environment variable")?;
+  let config = ServiceConfig {
+    weather_api_key: env::var("OPENWEATHER_API_KEY").context("Missing OPENWEATHER_API_KEY")?,
+    wakatime_api_key: env::var("WAKATIME_API_KEY").context("Missing WAKATIME_API_KEY")?,
+    telegram_bot_token: env::var("TELEGRAM_BOT_TOKEN").context("Missing TELEGRAM_BOT_TOKEN")?,
+    telegram_chat_id: env::var("TELEGRAM_CHAT_ID")
+      .context("Missing TELEGRAM_CHAT_ID")?
+      .parse()?,
+    readme_path: "README.md".into(),
+    config_path: "urdekcah.toml".into(),
+  };
 
-  let wakatime_key =
-    env::var("WAKATIME_API_KEY").context("Missing WAKATIME_API_KEY environment variable")?;
-
-  let config = ServiceConfig::new(
-    weather_key,
-    wakatime_key,
-    "README.md".to_string(),
-    "urdekcah.toml",
-  );
-
-  let wakatime_client = WakaTimeClient::new(config.wakatime_api_key.clone().as_str());
-  let runner =
-    ServiceRunner::new(config, wakatime_client).context("Failed to initialize service runner")?;
-
-  info!("Starting service runner");
-  runner.run().await.context("Service runner failed")?;
-
-  Ok(())
+  ServiceRunner::new(config)?.run().await
 }
 
-impl ServiceConfig {
-  pub fn new(
-    weather_key: String,
-    wakatime_key: String,
-    readme_path: impl Into<PathBuf> + std::fmt::Debug,
-    config_path: impl Into<PathBuf> + std::fmt::Debug,
-  ) -> Self {
-    Self {
-      weather_api_key: weather_key,
-      wakatime_api_key: wakatime_key,
-      readme_path: readme_path.into(),
-      config_path: config_path.into(),
-    }
-  }
-}
-
-impl<T: WakaTimeApi> ServiceRunner<T> {
-  #[instrument(skip(config, client))]
-  pub fn new(config: ServiceConfig, client: T) -> Result<Self> {
-    let weather_config = WeatherConfig::new(
-      config.weather_api_key.clone(),
-      config.readme_path.to_str().unwrap_or("README.md"),
-      Duration::from_secs(300),
-    )
-    .context("Failed to create weather configuration")?;
-
-    let wakatime_config =
-      Config::from_file(&config.config_path).context("Failed to load WakaTime configuration")?;
-
+impl ServiceRunner {
+  #[instrument(skip(config))]
+  pub fn new(config: ServiceConfig) -> Result<Self> {
     Ok(Self {
-      weather_service: WeatherService::new(weather_config),
-      stats_generator: StatsGenerator::new(wakatime_config, client),
-      config,
+      weather_service: WeatherService::new(WeatherConfig::new(
+        config.weather_api_key.clone(),
+        config.readme_path.to_str().unwrap_or("README.md"),
+        std::time::Duration::from_secs(300),
+      )?),
+      wakatime_service: WakaTimeService::new(
+        Config::from_file(&config.config_path)?,
+        config.wakatime_api_key.clone(),
+      ),
+      tg: TelegramClient::builder()
+        .token(config.telegram_bot_token.clone())
+        .build()?,
+      tg_chat_id: config.telegram_chat_id,
     })
   }
 
   #[instrument(skip(self))]
   pub async fn run(&self) -> Result<()> {
-    info!("Starting services");
-
-    if let Err(e) = self.weather_service.run().await {
-      warn!("Weather service error: {:?}", e);
+    match self.weather_service.run().await {
+      Ok(result) => {
+        let weather = &result.weather;
+        self.tg.message()
+          .chat_id(self.tg_chat_id)
+          .text(
+            format!(
+              "В настоящее время в *{}* погода,\nТекущая темп.: *{}°C*\nОщущается как: *{}°C*\nТекущая погода: *{}* {}\nПоследнее обновление было в: _{}_",
+              weather.location, weather.temp, weather.feels_like,
+              weather.condition_desc,
+              weather.emoji,
+              result.last_update.map_or("N/A".to_string(), |dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
+            ).as_str()
+          )
+          .parse_mode(telegram::ParseMode::MarkdownV2)
+          .send(&self.tg)
+          .await?;
+      }
+      Err(e) => tracing::warn!("Weather service error: {e:?}"),
     }
 
-    match self.update_wakatime_stats().await {
-      Ok(updated) => {
-        if updated {
-          info!("Successfully updated WakaTime statistics");
+    match self.wakatime_service.run().await {
+      Ok(update_result) => {
+        if update_result.was_updated {
+          self
+            .tg
+            .message()
+            .chat_id(self.tg_chat_id)
+            .text(
+              format!(
+                "WakaTime статистика успешно обновлена.\nПредыдущее обновление: *{}*",
+                update_result.last_update.map_or("N/A".to_string(), |dt| dt
+                  .format("%Y-%m-%d %H:%M:%S")
+                  .to_string())
+              )
+              .as_str(),
+            )
+            .parse_mode(telegram::ParseMode::MarkdownV2)
+            .send(&self.tg)
+            .await?;
+        } else {
+          self
+            .tg
+            .message()
+            .chat_id(self.tg_chat_id)
+            .text(
+              format!(
+                "_Обновление статистики WakaTime не требуется._\nПоследнее обновление: *{}*",
+                update_result.last_update.map_or("N/A".to_string(), |dt| dt
+                  .format("%Y-%m-%d %H:%M:%S")
+                  .to_string())
+              )
+              .as_str(),
+            )
+            .parse_mode(telegram::ParseMode::MarkdownV2)
+            .send(&self.tg)
+            .await?;
         }
       }
-      Err(e) => warn!("WakaTime update error: {:?}", e),
+      Err(e) => tracing::warn!("WakaTime service error: {e:?}"),
     }
 
     Ok(())
-  }
-
-  #[instrument(skip(self))]
-  async fn update_wakatime_stats(&self) -> Result<bool> {
-    info!("Generating WakaTime stats");
-    let stats = self
-      .stats_generator
-      .generate_stats()
-      .await
-      .context("Failed to generate WakaTime stats")?;
-
-    info!("Updating README.md with new stats");
-    self
-      .stats_generator
-      .update_readme(
-        self.config.readme_path.to_str().unwrap_or("README.md"),
-        &stats,
-      )
-      .context("Failed to update README with stats")
   }
 }

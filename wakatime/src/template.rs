@@ -3,29 +3,38 @@
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
 use crate::wakatime::WakaStats;
+use base::{Config, Error};
 use chrono::DateTime;
-use config::Config;
-use error::Error;
 use std::collections::HashSet;
 use tracing::{debug, instrument};
 
 const GRAPH_WIDTH: usize = 25;
 const TIME_WIDTH: usize = 16;
 
+#[derive(Debug)]
 pub struct Template {
   config: Config,
+  ignored_langs: HashSet<String>,
 }
 
 impl Template {
-  pub fn new(config: &Config) -> Self {
+  pub fn new(config: Config) -> Self {
+    let ignored_langs = config
+      .wakatime
+      .ignored_languages
+      .as_ref()
+      .map(|s| s.split_whitespace().map(String::from).collect())
+      .unwrap_or_default();
+
     Self {
-      config: config.clone(),
+      config,
+      ignored_langs,
     }
   }
 
   #[instrument(skip(self, stats))]
   pub fn render(&self, stats: &WakaStats) -> Result<String, Error> {
-    let mut content = String::new();
+    let mut content = String::with_capacity(1024); // Preallocate reasonable capacity
 
     if self.config.wakatime.show_title {
       content.push_str(&self.render_title(stats));
@@ -55,33 +64,23 @@ impl Template {
   }
 
   fn render_total_time(&self, stats: &WakaStats) -> String {
-    match (
+    let total = match (
       self.config.wakatime.show_masked_time,
       self.config.wakatime.show_total,
+      &stats.human_readable_total_including_other_language,
+      &stats.human_readable_total,
     ) {
-      (true, _) => stats
-        .human_readable_total_including_other_language
-        .as_ref()
-        .map(|total| format!("Total Time: {}\n\n", total)),
-      (false, true) => stats
-        .human_readable_total
-        .as_ref()
-        .map(|total| format!("Total Time: {}\n\n", total)),
+      (true, _, Some(total), _) => Some(total),
+      (false, true, _, Some(total)) => Some(total),
       _ => None,
-    }
-    .unwrap_or_default()
+    };
+
+    total
+      .map(|t| format!("Total Time: {}\n\n", t))
+      .unwrap_or_default()
   }
 
-  #[instrument(skip(self, stats))]
   fn render_languages(&self, stats: &WakaStats) -> String {
-    let ignored_langs: HashSet<String> = self
-      .config
-      .wakatime
-      .ignored_languages
-      .as_ref()
-      .map(|s| s.split_whitespace().map(String::from).collect())
-      .unwrap_or_default();
-
     let max_name_len = stats
       .languages
       .iter()
@@ -89,13 +88,20 @@ impl Template {
       .max()
       .unwrap_or(0);
 
-    let mut content = String::new();
+    let mut content = String::with_capacity(stats.languages.len() * 64);
+    let lang_count = self.config.wakatime.lang_count as usize;
 
-    for (idx, lang) in stats.languages.iter().enumerate() {
-      if ignored_langs.contains(&lang.name) {
-        continue;
-      }
-
+    for (_idx, lang) in stats
+      .languages
+      .iter()
+      .filter(|l| !self.ignored_langs.contains(&l.name))
+      .take(if lang_count > 0 {
+        lang_count
+      } else {
+        usize::MAX
+      })
+      .enumerate()
+    {
       let graph = self.make_graph(lang.percent);
       let time_str = if self.config.wakatime.show_time {
         &lang.text
@@ -114,10 +120,7 @@ impl Template {
         graph_width = GRAPH_WIDTH
       ));
 
-      if self.config.wakatime.stop_at_other && lang.name == "Other"
-        || self.config.wakatime.lang_count > 0
-          && idx + 1 >= self.config.wakatime.lang_count as usize
-      {
+      if self.config.wakatime.stop_at_other && lang.name == "Other" {
         break;
       }
     }
@@ -131,20 +134,18 @@ impl Template {
       return "Invalid blocks configuration".to_string();
     }
 
-    let length = GRAPH_WIDTH;
-    let markers = blocks.len() - 1;
-    let proportion = (percent / 100.0 * length as f64).min(length as f64);
+    let proportion = (percent / 100.0 * GRAPH_WIDTH as f64).min(GRAPH_WIDTH as f64);
+    let full_blocks = (proportion + 0.125) as usize;
+    let remainder = ((proportion - full_blocks as f64) * 4.0 + 0.5) as usize;
 
-    let full_blocks = (proportion + 0.5 / markers as f64) as usize;
-    let mut graph = String::with_capacity(length);
-    graph.extend(std::iter::repeat(blocks[blocks.len() - 1]).take(full_blocks));
+    let mut graph = String::with_capacity(GRAPH_WIDTH);
+    graph.extend(std::iter::repeat(blocks[3]).take(full_blocks));
 
-    let remainder = ((proportion - full_blocks as f64) * markers as f64 + 0.5) as usize;
     if remainder > 0 && remainder < blocks.len() {
       graph.push(blocks[remainder]);
     }
 
-    graph.extend(std::iter::repeat(blocks[0]).take(length - graph.chars().count()));
+    graph.extend(std::iter::repeat(blocks[0]).take(GRAPH_WIDTH - graph.chars().count()));
     graph
   }
 }

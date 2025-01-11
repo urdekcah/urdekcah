@@ -2,76 +2,141 @@
 //
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
-use crate::{
-  template::Template,
-  wakatime::{WakaStats, WakaTimeApi},
-};
-use config::Config;
-use error::Error;
-use std::{fs, path::Path};
-use tracing::{debug, instrument};
+use crate::MARKDOWN_MARKERS;
+use base::Error;
+use chrono::{DateTime, Utc};
+use std::path::PathBuf;
 
-pub struct StatsGenerator<T: WakaTimeApi> {
-  config: Config,
-  client: T,
+#[derive(Debug, Clone)]
+pub struct UpdateResult {
+  pub stats: String,
+  pub last_update: Option<DateTime<Utc>>,
+  pub current_update: DateTime<Utc>,
+  pub was_updated: bool,
 }
 
-impl<T: WakaTimeApi> StatsGenerator<T> {
-  pub fn new(config: Config, client: T) -> Self {
-    Self { config, client }
+#[derive(Debug)]
+pub struct StatsUpdater {
+  readme_path: PathBuf,
+  section_name: String,
+}
+
+impl StatsUpdater {
+  pub fn new(readme_path: PathBuf, section_name: String) -> Self {
+    Self {
+      readme_path,
+      section_name,
+    }
   }
 
-  #[instrument(skip(self))]
-  pub async fn generate_stats(&self) -> Result<String, Error> {
-    debug!("Fetching WakaTime stats");
-    let stats = self
-      .client
-      .fetch_stats(&self.config.wakatime.time_range)
-      .await?;
-    debug!("Preparing content from stats");
-    self.prepare_content(&stats)
+  pub async fn update(&self, new_content: &str) -> Result<UpdateResult, Error> {
+    let readme = std::fs::read_to_string(&self.readme_path)?;
+    let current_update = Utc::now();
+    let (existing_content, last_update) = self.extract_content_and_timestamp(&readme)?;
+
+    if self.contents_equal(existing_content.trim(), new_content.trim()) {
+      return Ok(UpdateResult {
+        stats: new_content.to_string(),
+        last_update,
+        current_update,
+        was_updated: false,
+      });
+    }
+
+    let updated_readme = self.replace_section(&readme, new_content, current_update)?;
+    std::fs::write(&self.readme_path, updated_readme)?;
+
+    Ok(UpdateResult {
+      stats: new_content.to_string(),
+      last_update,
+      current_update,
+      was_updated: true,
+    })
   }
 
-  #[instrument(skip(self, stats))]
-  fn prepare_content(&self, stats: &WakaStats) -> Result<String, Error> {
-    let template = Template::new(&self.config);
-    template.render(stats)
-  }
-
-  #[instrument(skip(self, content))]
-  pub fn update_readme<P: AsRef<Path> + std::fmt::Debug>(
+  fn extract_content_and_timestamp(
     &self,
-    path: P,
+    readme: &str,
+  ) -> Result<(String, Option<DateTime<Utc>>), Error> {
+    let start_marker = format!("<!--START_SECTION:{}-->", self.section_name);
+    let end_marker = format!("<!--END_SECTION:{}-->", self.section_name);
+
+    let section = readme
+      .split(&start_marker)
+      .nth(1)
+      .and_then(|s| s.split(&end_marker).next())
+      .ok_or_else(|| Error::ParseError("Failed to extract content section".into()))?;
+
+    let last_update = self.parse_last_update(section);
+
+    let content = section
+      .lines()
+      .filter(|line| !line.trim().starts_with("<!--") && !line.trim().ends_with("-->"))
+      .collect::<Vec<_>>()
+      .join("\n")
+      .trim()
+      .to_string();
+
+    Ok((content, last_update))
+  }
+
+  fn contents_equal(&self, content1: &str, content2: &str) -> bool {
+    let normalize = |s: &str| {
+      s.lines()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty())
+        .filter(|line| !line.starts_with("```") && !line.ends_with("```"))
+        .collect::<Vec<_>>()
+        .join("\n")
+    };
+
+    normalize(content1) == normalize(content2)
+  }
+
+  fn replace_section(
+    &self,
+    readme: &str,
     content: &str,
-  ) -> Result<bool, Error> {
-    let readme = fs::read_to_string(path.as_ref())?;
+    timestamp: DateTime<Utc>,
+  ) -> Result<String, Error> {
+    let start_marker = format!("<!--START_SECTION:{}-->", self.section_name);
+    let end_marker = format!("<!--END_SECTION:{}-->", self.section_name);
 
-    let start_comment = format!("<!--START_SECTION:{}-->", self.config.wakatime.section_name);
-    let end_comment = format!("<!--END_SECTION:{}-->", self.config.wakatime.section_name);
-
-    let replacement = format!(
-      "{}\n```{}\n{}```\n{}",
-      start_comment, self.config.wakatime.code_lang, content, end_comment
+    let new_section = format!(
+      "{}\n{}{}-->\n{}\n{}",
+      start_marker,
+      MARKDOWN_MARKERS.last_update_prefix,
+      timestamp.format(MARKDOWN_MARKERS.datetime_format),
+      content,
+      end_marker
     );
 
     let pattern = format!(
-      "{}[\\s\\S]+{}",
-      regex::escape(&start_comment),
-      regex::escape(&end_comment)
+      "{}[\\s\\S]+?{}",
+      regex::escape(&start_marker),
+      regex::escape(&end_marker)
     );
 
-    let re = regex::Regex::new(&pattern)
-      .map_err(|e| Error::TemplateError(format!("Invalid regex pattern: {}", e)))?;
+    let re = regex::Regex::new(&pattern)?;
+    Ok(re.replace(readme, &new_section).into_owned())
+  }
 
-    let new_readme = re.replace(&readme, replacement);
+  fn parse_last_update(&self, content: &str) -> Option<DateTime<Utc>> {
+    content
+      .lines()
+      .find(|line| line.starts_with(MARKDOWN_MARKERS.last_update_prefix))
+      .and_then(|line| {
+        let timestamp = line
+          .trim_start_matches(MARKDOWN_MARKERS.last_update_prefix)
+          .trim_end_matches(MARKDOWN_MARKERS.html_comment_end)
+          .trim();
 
-    if new_readme != readme {
-      fs::write(path, new_readme.as_bytes())?;
-      debug!("README updated successfully");
-      Ok(true)
-    } else {
-      debug!("No changes needed in README");
-      Ok(false)
-    }
+        DateTime::parse_from_str(
+          &format!("{} +0000", timestamp),
+          &format!("{} %z", MARKDOWN_MARKERS.datetime_format),
+        )
+        .ok()
+        .map(|dt| dt.with_timezone(&Utc))
+      })
   }
 }

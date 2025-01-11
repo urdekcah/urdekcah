@@ -2,16 +2,21 @@
 //
 // Этот исходный код распространяется под лицензией AGPL-3.0,
 // текст которой находится в файле LICENSE в корневом каталоге данного проекта.
+use std::path::PathBuf;
 use thiserror::Error as ThisError;
 
 #[derive(ThisError, Debug)]
 pub enum Error {
+  #[error("Error: {0}")]
+  Err(String),
   #[error("API error: {0}")]
   ApiError(String),
   #[error("Configuration error: {0}")]
   ConfigError(String),
   #[error("IO error: {0}")]
   IoError(#[from] std::io::Error),
+  #[error("Path not found: {0}")]
+  PathNotFound(PathBuf),
   #[error("HTTP error: {0}")]
   HttpError(#[from] reqwest::Error),
   #[error("Failed to parse response: {0}")]
@@ -20,6 +25,8 @@ pub enum Error {
   TemplateError(String),
   #[error("Regex error: {0}")]
   RegexError(#[from] regex::Error),
+  #[error("Missing city in weather section")]
+  MissingCity,
   #[error("Invalid city name: {0}")]
   InvalidCity(String),
   #[error("Invalid API key")]

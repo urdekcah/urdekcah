@@ -34,7 +34,9 @@ impl Template {
 
   #[instrument(skip(self, stats))]
   pub fn render(&self, stats: &WakaStats) -> Result<String, Error> {
-    let mut content = String::with_capacity(1024); // Preallocate reasonable capacity
+    let mut content = String::new(); // Just use String::new() instead of with_capacity :D
+
+    content.push_str(format!("```{}\n", self.config.wakatime.code_lang).as_str());
 
     if self.config.wakatime.show_title {
       content.push_str(&self.render_title(stats));
@@ -45,6 +47,7 @@ impl Template {
     }
 
     content.push_str(&self.render_languages(stats));
+    content.push_str("```");
     debug!("Template rendered successfully");
     Ok(content)
   }

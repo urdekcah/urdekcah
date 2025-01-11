@@ -18,10 +18,25 @@ pub struct WeatherInfo {
   pub sunset: DateTime<FixedOffset>,
   pub location: String,
   pub country: String,
+  pub emoji: String,
   pub last_update: DateTime<Utc>,
 }
 
 impl WeatherInfo {
+  fn get_emoji(condition: &str) -> String {
+    match condition {
+      "Thunderstorm" => "⛈️",
+      "Drizzle" => "🌦️",
+      "Rain" => "🌧️",
+      "Snow" => "❄️",
+      "Atmosphere" => "🌫️",
+      "Clear" => "☀️",
+      "Clouds" => "☁️",
+      _ => "❓",
+    }
+    .to_string()
+  }
+
   pub fn from_response(response: WeatherResponse) -> Result<Self, Error> {
     let tz_offset = FixedOffset::east_opt(response.timezone)
       .ok_or_else(|| Error::InvalidResponse("Invalid timezone offset".to_string()))?;
@@ -52,6 +67,7 @@ impl WeatherInfo {
       sunset,
       location: response.name,
       country: response.sys.country,
+      emoji: Self::get_emoji(&weather.main),
       last_update: Utc::now(),
     })
   }

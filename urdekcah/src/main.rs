@@ -91,9 +91,10 @@ impl ServiceRunner {
           .chat_id(self.tg_chat_id)
           .text(
             format!(
-              "В настоящее время в *{}* погода,\nТекущая темп.: *{}°C*\nОщущается как: *{}°C*\nТекущая погода: *{}*\nПоследнее обновление было в: _{}_",
+              "В настоящее время в *{}* погода,\nТекущая темп.: *{}°C*\nОщущается как: *{}°C*\nТекущая погода: *{}* {}\nПоследнее обновление было в: _{}_",
               weather.location, weather.temp, weather.feels_like,
               weather.condition_desc,
+              weather.emoji,
               result.last_update.map_or("N/A".to_string(), |dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
             ).as_str()
           )

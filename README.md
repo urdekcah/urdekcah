@@ -10,15 +10,6 @@
 
 ### SINCE SEP 25 2024
 <!--START_SECTION:waka-->
-<!--LAST_WAKA_UPDATE:2025-01-11 10:05:58-->
-Total Time: 268 hrs 47 mins
-
-C                          131 hrs 23 mins ████████████░░░░░░░░░░░░░   47.65 %
-Rust                       41 hrs 11 mins  ████░░░░░░░░░░░░░░░░░░░░░   14.94 %
-C++                        15 hrs 15 mins  █▓░░░░░░░░░░░░░░░░░░░░░░░   05.53 %
-JavaScript                 13 hrs 44 mins  █▒░░░░░░░░░░░░░░░░░░░░░░░   04.98 %
-Markdown                   8 hrs 10 mins   █░░░░░░░░░░░░░░░░░░░░░░░░   02.96 %
-
 <!--END_SECTION:waka-->
 
 <h3>Добро пожаловать в <img src="https://cdn-icons-png.flaticon.com/512/197/197408.png" width="13"/> Москву!</h3>

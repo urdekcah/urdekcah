@@ -5,6 +5,7 @@
 mod config;
 pub mod dotenv;
 mod error;
+pub mod translate;
 
 pub use config::*;
 pub use error::*;

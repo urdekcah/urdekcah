@@ -35,3 +35,6 @@ telegram = { path = "./telegram" }
 base = { path = "./base" }
 weather = { path = "./weather" }
 wakatime = { path = "./wakatime" }
+
+[profile.dev.build-override]
+opt-level = 3

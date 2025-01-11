@@ -23,7 +23,7 @@ impl Template {
       .wakatime
       .ignored_languages
       .as_ref()
-      .map(|s| s.split_whitespace().map(String::from).collect())
+      .map(|s| s.split_whitespace().map(|x| x.to_lowercase()).collect())
       .unwrap_or_default();
 
     Self {
@@ -34,7 +34,7 @@ impl Template {
 
   #[instrument(skip(self, stats))]
   pub fn render(&self, stats: &WakaStats) -> Result<String, Error> {
-    let mut content = String::new(); // Just use String::new() instead of with_capacity :D
+    let mut content = String::new();
 
     content.push_str(format!("```{}\n", self.config.wakatime.code_lang).as_str());
 
@@ -91,20 +91,13 @@ impl Template {
       .max()
       .unwrap_or(0);
 
-    let mut content = String::with_capacity(stats.languages.len() * 64);
-    let lang_count = self.config.wakatime.lang_count as usize;
+    let mut content = String::new();
 
-    for (_idx, lang) in stats
-      .languages
-      .iter()
-      .filter(|l| !self.ignored_langs.contains(&l.name))
-      .take(if lang_count > 0 {
-        lang_count
-      } else {
-        usize::MAX
-      })
-      .enumerate()
-    {
+    for (idx, lang) in stats.languages.iter().enumerate() {
+      if self.ignored_langs.contains(&lang.name.to_lowercase()) {
+        continue;
+      }
+
       let graph = self.make_graph(lang.percent);
       let time_str = if self.config.wakatime.show_time {
         &lang.text
@@ -123,7 +116,10 @@ impl Template {
         graph_width = GRAPH_WIDTH
       ));
 
-      if self.config.wakatime.stop_at_other && lang.name == "Other" {
+      if self.config.wakatime.stop_at_other && lang.name == "Other"
+        || self.config.wakatime.lang_count > 0
+          && idx + 1 >= self.config.wakatime.lang_count as usize
+      {
         break;
       }
     }
@@ -137,13 +133,14 @@ impl Template {
       return "Invalid blocks configuration".to_string();
     }
 
+    let markers = blocks.len() - 1;
     let proportion = (percent / 100.0 * GRAPH_WIDTH as f64).min(GRAPH_WIDTH as f64);
-    let full_blocks = (proportion + 0.125) as usize;
-    let remainder = ((proportion - full_blocks as f64) * 4.0 + 0.5) as usize;
+    let full_blocks = (proportion + 0.5 / markers as f64) as usize;
 
     let mut graph = String::with_capacity(GRAPH_WIDTH);
-    graph.extend(std::iter::repeat(blocks[3]).take(full_blocks));
+    graph.extend(std::iter::repeat(blocks[blocks.len() - 1]).take(full_blocks));
 
+    let remainder = ((proportion - full_blocks as f64) * markers as f64 + 0.5) as usize;
     if remainder > 0 && remainder < blocks.len() {
       graph.push(blocks[remainder]);
     }

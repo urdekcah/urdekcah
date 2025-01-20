@@ -24,7 +24,7 @@ C++                        15 hrs 15 mins  █▒░░░░░░░░░░�
 <h3>Добро пожаловать в <img src="https://cdn-icons-png.flaticon.com/512/197/197408.png" width="13"/> Москву!</h3>
 
 <!--START_SECTION:weather:moscow-->
-<!--LAST_WEATHER_UPDATE:2025-01-19 21:17:42-->
-Currently in **Moscow** (RU), the weather is: **-0.2°C** (feels like **-4.8°C**), ***broken clouds***<br/>
+<!--LAST_WEATHER_UPDATE:2025-01-20 01:37:14-->
+Currently in **Moscow** (RU), the weather is: **0.0°C** (feels like **-5.3°C**), ***broken clouds***<br/>
 On *January 20, 2025*, the *sun rises* at 🌅**08:43** and *sets* at 🌇**16:37**.
 <!--END_SECTION:weather-->

@@ -24,7 +24,7 @@ JavaScript                 18 hrs 5 mins   █▒░░░░░░░░░░�
 <h3>Добро пожаловать в <img src="https://cdn-icons-png.flaticon.com/512/197/197408.png" width="13"/> Москву!</h3>
 
 <!--START_SECTION:weather:moscow-->
-<!--LAST_WEATHER_UPDATE:2025-01-27 12:39:54-->
-Currently in **Moscow** (RU), the weather is: **4.7°C** (feels like **0.7°C**), ***overcast clouds***<br/>
+<!--LAST_WEATHER_UPDATE:2025-01-27 15:19:17-->
+Currently in **Moscow** (RU), the weather is: **5.3°C** (feels like **1.5°C**), ***overcast clouds***<br/>
 On *January 27, 2025*, the *sun rises* at 🌅**08:32** and *sets* at 🌇**16:51**.
 <!--END_SECTION:weather-->

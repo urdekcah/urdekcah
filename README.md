@@ -10,13 +10,13 @@
 
 ### SINCE SEP 25 2024
 <!--START_SECTION:waka-->
-<!--LAST_WAKA_UPDATE:2025-05-15 18:09:33-->
+<!--LAST_WAKA_UPDATE:2025-05-19 18:09:50-->
 ```txt
-Total Time: 417 hrs 26 mins
+Total Time: 417 hrs 43 mins
 
-C                          132 hrs 20 mins ███████▓░░░░░░░░░░░░░░░░░   30.84 %
-Rust                       76 hrs 6 mins   ████▒░░░░░░░░░░░░░░░░░░░░   17.74 %
-Python                     65 hrs 56 mins  ████░░░░░░░░░░░░░░░░░░░░░   15.37 %
+C                          132 hrs 20 mins ███████▓░░░░░░░░░░░░░░░░░   30.82 %
+Rust                       76 hrs 9 mins   ████▒░░░░░░░░░░░░░░░░░░░░   17.74 %
+Python                     65 hrs 56 mins  ████░░░░░░░░░░░░░░░░░░░░░   15.36 %
 JavaScript                 19 hrs 20 mins  █░░░░░░░░░░░░░░░░░░░░░░░░   04.51 %
 ```
 <!--END_SECTION:waka-->
@@ -24,7 +24,7 @@ JavaScript                 19 hrs 20 mins  █░░░░░░░░░░░�
 <h3>Добро пожаловать в <img src="https://cdn-icons-png.flaticon.com/512/197/197408.png" width="13"/> Москву!</h3>
 
 <!--START_SECTION:weather:moscow-->
-<!--LAST_WEATHER_UPDATE:2025-05-19 15:08:10-->
-Currently in **Moscow** (RU), the weather is: **13.7°C** (feels like **12.9°C**), ***overcast clouds***<br/>
+<!--LAST_WEATHER_UPDATE:2025-05-19 18:09:49-->
+Currently in **Moscow** (RU), the weather is: **11.2°C** (feels like **10.1°C**), ***overcast clouds***<br/>
 On *May 19, 2025*, the *sun rises* at 🌅**04:11** and *sets* at 🌇**20:41**.
 <!--END_SECTION:weather-->
